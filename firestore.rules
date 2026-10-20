@@ -1,0 +1,381 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function esAdmin() {
+      return autenticado()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == "admin";
+    }
+
+    function checklistValido() {
+      let d = request.resource.data;
+      return d.plantilla == "salida-hardware-v1"
+        && d.tipoEquipo in ["totem", "visor", "locker"]
+        && d.proyecto is string
+        && d.proyecto.size() > 0
+        && d.proyecto.size() <= 160
+        && d.cliente is string
+        && d.cliente.size() > 0
+        && d.cliente.size() <= 160
+        && d.tecnico is string
+        && d.tecnico.size() > 0
+        && d.tecnico.size() <= 120
+        && d.numeroSerie is string
+        && d.numeroSerie.size() > 0
+        && d.numeroSerie.size() <= 80
+        && d.numeroSerieNorm is string
+        && d.numeroSerieNorm.size() > 0
+        && d.numeroSerieNorm.size() <= 80
+        && d.mac is string
+        && d.mac.matches('^[0-9A-F]{2}(:[0-9A-F]{2}){5}$')
+        && d.ip is string
+        && d.ip.matches('^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$')
+        && d.fechaInspeccion is string
+        && d.fechaInspeccion.matches('^\\d{4}-\\d{2}-\\d{2}$')
+        && d.fechaSalida is string
+        && d.fechaSalida.matches('^\\d{4}-\\d{2}-\\d{2}$')
+        && d.estado in ["aprobado", "rechazado"]
+        && d.observaciones is string
+        && d.observaciones.size() <= 2000
+        && (d.estado == "aprobado" || d.observaciones.size() >= 10)
+        && d.items is map
+        && d.items.size() <= 40
+        && d.firmaTecnico is map
+        && d.firmaTecnico.nombre is string
+        && d.firmaTecnico.nombre.size() > 0
+        && d.firmaTecnico.nombre.size() <= 120
+        && d.firmaTecnico.imagen is string
+        && d.firmaTecnico.imagen.size() <= 150000
+        && d.firmaCalidad is map
+        && d.firmaCalidad.nombre is string
+        && d.firmaCalidad.nombre.size() <= 120
+        && d.firmaCalidad.imagen is string
+        && d.firmaCalidad.imagen.size() <= 150000
+        && d.creadoEn is timestamp
+        && d.actualizadoEn is timestamp
+        && d.creadoPor is string
+        && d.creadoPorEmail is string
+        && d.actualizadoPor == request.auth.uid
+        && d.numero is int
+        && d.numero > 0;
+    }
+
+    function textoHasta(valor, max) {
+      return valor is string && valor.size() <= max;
+    }
+
+    function cartillaValida() {
+      let d = request.resource.data;
+      return d.plantilla == "cartilla-ruta-v1"
+        && d.tipoEquipo in ["totem", "visor", "locker"]
+        && textoHasta(d.creadaPorNombre, 120)
+        && d.creadaPorNombre.size() > 0
+        && textoHasta(d.aprobadaPorNombre, 120)
+        && textoHasta(d.cliente, 160)
+        && d.cliente.size() > 0
+        && textoHasta(d.modelo, 120)
+        && d.modelo.size() > 0
+        && textoHasta(d.numeroSerie, 80)
+        && d.numeroSerie.size() > 0
+        && textoHasta(d.numeroSerieNorm, 80)
+        && textoHasta(d.numeroParte, 80)
+        && d.filas is map
+        && d.filas.size() <= 80
+        && d.finalizacion is map
+        && d.finalizacion.size() <= 3
+        && d.creadoEn is timestamp
+        && d.actualizadoEn is timestamp
+        && d.creadoPor is string
+        && d.creadoPorEmail is string
+        && d.actualizadoPor == request.auth.uid
+        && d.numero is int
+        && d.numero > 0;
+    }
+
+    function auditoriaValida(d) {
+      return d.creadoEn is timestamp
+        && d.actualizadoEn is timestamp
+        && d.creadoPor is string
+        && d.creadoPorEmail is string
+        && d.actualizadoPor == request.auth.uid
+        && d.numero is int
+        && d.numero > 0;
+    }
+
+    function auditoriaIntacta() {
+      return request.resource.data.creadoPor == resource.data.creadoPor
+        && request.resource.data.creadoEn == resource.data.creadoEn
+        && request.resource.data.creadoPorEmail == resource.data.creadoPorEmail
+        && request.resource.data.numero == resource.data.numero;
+    }
+
+    function costoValido() {
+      let d = request.resource.data;
+      return d.plantilla == "base-costos-hw-v1"
+        && d.linea in ["autoservicio", "cleverq",
+          "clickCollect", "mercadata"]
+        && d.tipoEquipo in ["totem", "visor", "locker"]
+        && textoHasta(d.modelo, 120)
+        && d.modelo.size() > 0
+        && textoHasta(d.modeloClave, 120)
+        && textoHasta(d.configuracion, 160)
+        && d.moneda in ["USD", "CLP", "UF"]
+        && d.costo is number
+        && d.costo > 0
+        && d.costo <= 1000000000
+        && d.fechaActualizacion is string
+        && (d.fechaActualizacion.size() == 0
+          || d.fechaActualizacion.matches('^\\d{4}-\\d{2}-\\d{2}$'))
+        && textoHasta(d.referencia, 200)
+        && d.lineas is list
+        && d.lineas.size() <= 200
+        && (!('cantidadEquipos' in d)
+          || (d.cantidadEquipos is int
+            && d.cantidadEquipos >= 1
+            && d.cantidadEquipos <= 9999))
+        && (!('costoLote' in d)
+          || (d.costoLote is number
+            && d.costoLote >= 0
+            && d.costoLote <= 1000000000))
+        && (!('tipoCambio' in d)
+          || (d.tipoCambio is map && d.tipoCambio.size() <= 2))
+        && (!('fechaCambio' in d) || textoHasta(d.fechaCambio, 10))
+        && (!('clienteCotizacion' in d)
+          || textoHasta(d.clienteCotizacion, 48))
+        && (!('historial' in d)
+          || (d.historial is list && d.historial.size() <= 100))
+        && textoHasta(d.observaciones, 600)
+        && auditoriaValida(d);
+    }
+
+    function modeloValido() {
+      let d = request.resource.data;
+      return d.plantilla == "modelo-hw-v1"
+        && d.tipo in ["totem", "visor", "locker", "componente"]
+        && textoHasta(d.nombre, 120)
+        && d.nombre.size() > 0
+        && textoHasta(d.nombreClave, 120)
+        && textoHasta(d.otroNombre, 120)
+        && d.estado in ["vigente", "descontinuado"]
+        && d.clientes is list
+        && d.clientes.size() <= 60
+        && d.imagen is string
+        && d.imagen.size() <= 150000
+        && (d.imagen.size() == 0
+          || d.imagen.matches('^data:image/(png|jpeg|webp);base64,.+'))
+        && d.ficha is map
+        && d.ficha.size() <= 13
+        && textoHasta(d.notas, 600)
+        && auditoriaValida(d);
+    }
+
+    match /baseCostosHw/{id} {
+      allow read, delete: if esAdmin();
+      allow create: if esAdmin()
+        && costoValido()
+        && request.resource.data.creadoPor == request.auth.uid;
+      allow update: if esAdmin() && costoValido() && auditoriaIntacta();
+    }
+
+    function clienteCotizacionValido() {
+      let d = request.resource.data;
+      return d.plantilla == "cliente-cotizacion-v1"
+        && textoHasta(d.etiqueta, 80)
+        && d.etiqueta.size() > 0
+        && textoHasta(d.etiquetaClave, 80)
+        && d.anio is int
+        && d.anio >= 2020
+        && d.anio <= 2100
+        && d.incluyeHh is bool
+        && d.componentes is list
+        && d.componentes.size() <= 200
+        && auditoriaValida(d);
+    }
+
+    function fichaCampos(d) {
+      return textoHasta(d.licitacion, 160)
+        && d.licitacion.size() > 0
+        && textoHasta(d.licitacionClave, 80)
+        && d.licitacionClave.size() > 0
+        && textoHasta(d.cliente, 80)
+        && textoHasta(d.sistema, 80)
+        && textoHasta(d.pais, 40)
+        && d.oficinas is list
+        && d.oficinas.size() <= 40
+        && d.sectores is list
+        && d.sectores.size() <= 40
+        && d.totems is list
+        && d.totems.size() <= 40
+        && d.gruposModulo is list
+        && d.gruposModulo.size() <= 40
+        && d.admins is list
+        && d.admins.size() <= 40
+        && d.adminsSector is list
+        && d.adminsSector.size() <= 40
+        && d.ejecutivos is list
+        && d.ejecutivos.size() <= 40
+        && d.visores is list
+        && d.visores.size() <= 40
+        && d.equipos is list
+        && d.equipos.size() <= 40
+        && d.requisitos is list
+        && d.requisitos.size() <= 40
+        && textoHasta(d.idCentro, 40)
+        && textoHasta(d.msgAtrasado, 200)
+        && textoHasta(d.minutosAtraso, 8)
+        && textoHasta(d.minutosAdelanto, 8)
+        && textoHasta(d.msgTemprano, 200)
+        && d.menu is map
+        && d.red is list
+        && d.red.size() <= 40;
+    }
+
+    function fichaValida() {
+      let d = request.resource.data;
+      return d.plantilla == "ficha-config-v1"
+        && fichaCampos(d)
+        && auditoriaValida(d);
+    }
+
+    function fichaClienteValida() {
+      let d = request.resource.data;
+      return d.plantilla == "ficha-cliente-v1"
+        && fichaCampos(d)
+        && textoHasta(d.token, 80)
+        && d.token.size() >= 16
+        && textoHasta(d.rellenadoPor, 120)
+        && d.estado in ["pendiente", "en_curso", "finalizado"]
+        && d.historial is list
+        && d.historial.size() <= 80
+        && d.plazoHasta is timestamp
+        && d.creadoEn is timestamp
+        && d.actualizadoEn is timestamp
+        && d.numero is int
+        && d.numero > 0
+        && textoHasta(d.creadoPor, 128)
+        && textoHasta(d.creadoPorEmail, 160)
+        && textoHasta(d.actualizadoPor, 120)
+        && (!("finalizadoEn" in d)
+          || d.finalizadoEn == null
+          || d.finalizadoEn is timestamp)
+        && (!("pdfUrl" in d) || textoHasta(d.pdfUrl, 600))
+        && (!("pdfRuta" in d) || textoHasta(d.pdfRuta, 200))
+        && (!("pdfNombre" in d) || textoHasta(d.pdfNombre, 120));
+    }
+
+    function clientePuedeGuardar() {
+      let old = resource.data;
+      let d = request.resource.data;
+      return request.auth == null
+        && request.time < old.plazoHasta
+        && old.estado != "finalizado"
+        && d.token == old.token
+        && d.licitacion == old.licitacion
+        && d.licitacionClave == old.licitacionClave
+        && d.plazoHasta == old.plazoHasta
+        && d.creadoEn == old.creadoEn
+        && d.creadoPor == old.creadoPor
+        && d.creadoPorEmail == old.creadoPorEmail
+        && d.numero == old.numero
+        && d.actualizadoPor == "cliente"
+        && d.estado in ["en_curso", "finalizado"]
+        && fichaClienteValida();
+    }
+
+    match /fichasConfig/{id} {
+      allow read, delete: if esAdmin();
+      allow create: if esAdmin()
+        && fichaValida()
+        && request.resource.data.creadoPor == request.auth.uid;
+      allow update: if esAdmin()
+        && fichaValida()
+        && auditoriaIntacta();
+    }
+
+    match /fichasCliente/{id} {
+      allow get: if true;
+      allow list, delete: if esAdmin();
+      allow create: if esAdmin()
+        && request.resource.data.plantilla == "ficha-cliente-v1"
+        && request.resource.data.token == id
+        && request.resource.data.creadoPor == request.auth.uid
+        && fichaCampos(request.resource.data)
+        && textoHasta(request.resource.data.token, 80)
+        && request.resource.data.token.size() >= 16
+        && request.resource.data.estado in
+          ["pendiente", "en_curso", "finalizado"]
+        && request.resource.data.historial is list
+        && request.resource.data.historial.size() <= 80
+        && request.resource.data.plazoHasta is timestamp
+        && request.resource.data.numero is int
+        && request.resource.data.numero > 0;
+      allow update: if (esAdmin()
+          && fichaClienteValida()
+          && auditoriaIntacta())
+        || clientePuedeGuardar();
+    }
+
+    match /clientesCotizacion/{id} {
+      allow read, delete: if esAdmin();
+      allow create: if esAdmin()
+        && clienteCotizacionValido()
+        && request.resource.data.creadoPor == request.auth.uid;
+      allow update: if esAdmin()
+        && clienteCotizacionValido()
+        && auditoriaIntacta();
+    }
+
+    match /modelosHw/{id} {
+      allow read, delete: if esAdmin();
+      allow create: if esAdmin()
+        && modeloValido()
+        && request.resource.data.creadoPor == request.auth.uid;
+      allow update: if esAdmin() && modeloValido() && auditoriaIntacta();
+    }
+
+    match /cartillasRuta/{id} {
+      allow read, delete: if esAdmin();
+      allow create: if esAdmin()
+        && cartillaValida()
+        && request.resource.data.creadoPor == request.auth.uid;
+      allow update: if esAdmin()
+        && cartillaValida()
+        && request.resource.data.creadoPor == resource.data.creadoPor
+        && request.resource.data.creadoEn == resource.data.creadoEn
+        && request.resource.data.creadoPorEmail == resource.data.creadoPorEmail
+        && request.resource.data.numero == resource.data.numero;
+    }
+
+    match /usuarios/{uid} {
+      allow read: if autenticado() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /checklistsSalida/{id} {
+      allow read, delete: if esAdmin();
+      allow create: if esAdmin()
+        && checklistValido()
+        && request.resource.data.creadoPor == request.auth.uid;
+      allow update: if esAdmin()
+        && checklistValido()
+        && request.resource.data.creadoPor == resource.data.creadoPor
+        && request.resource.data.creadoEn == resource.data.creadoEn
+        && request.resource.data.creadoPorEmail == resource.data.creadoPorEmail
+        && request.resource.data.numero == resource.data.numero;
+    }
+
+    match /contadores/{id} {
+      allow read: if esAdmin();
+      allow create: if esAdmin()
+        && request.resource.data.ultimo is int
+        && request.resource.data.ultimo == 1;
+      allow update: if esAdmin()
+        && request.resource.data.ultimo is int
+        && request.resource.data.ultimo == resource.data.ultimo + 1;
+    }
+  }
+}

@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Checklist de salida | DTS</title>
+  <link rel="icon" href="./assets/logo-dts.png">
+  <link rel="stylesheet" href="./css/app.css?v=62">
+</head>
+<body>
+  <section id="pantalla-login" class="acceso">
+    <form id="form-login" class="tarjeta-acceso">
+      <img
+        class="logo"
+        src="./assets/logo-dts.png"
+        alt="DTS Autoservicio"
+      >
+      <p class="marca-texto">DTS Autoservicio SpA</p>
+      <h1>Checklist de salida</h1>
+      <p class="ayuda">
+        Control de calidad y salida a terreno.
+        Entra con tu usuario de administrador.
+      </p>
+      <label class="campo">
+        <span>Correo</span>
+        <input
+          id="login-email"
+          type="email"
+          autocomplete="username"
+          maxlength="120"
+          required
+        >
+      </label>
+      <label class="campo">
+        <span>Contraseña</span>
+        <input
+          id="login-clave"
+          type="password"
+          autocomplete="current-password"
+          maxlength="80"
+          required
+        >
+      </label>
+      <p id="login-mensaje" class="mensaje" role="alert"></p>
+      <button id="btn-entrar" class="boton" type="submit">
+        Entrar
+      </button>
+      <p id="enlace-demo" hidden>
+        <a href="?demo=1#/listado">Ver vista previa en este equipo</a>
+      </p>
+    </form>
+  </section>
+
+  <section id="pantalla-denegado" class="acceso" hidden>
+    <div class="tarjeta-acceso">
+      <img
+        class="logo"
+        src="./assets/logo-dts.png"
+        alt="DTS Autoservicio"
+      >
+      <h1>Sin acceso</h1>
+      <p id="denegado-texto">
+        Este usuario no tiene perfil de administrador.
+      </p>
+      <p id="denegado-detalle"></p>
+      <p class="uid">UID: <code id="denegado-uid"></code></p>
+      <button id="btn-salir-denegado" class="boton" type="button">
+        Cerrar sesión
+      </button>
+    </div>
+  </section>
+
+  <section id="pantalla-publica" class="ficha-pub" hidden>
+    <header class="ficha-pub-barra">
+      <img src="./assets/logo-dts.png" alt="DTS Autoservicio">
+      <div>
+        <p class="kicker">DTS Autoservicio</p>
+        <h1>Ficha de configuración</h1>
+        <p id="pub-licitacion" class="ficha-pub-lic"></p>
+      </div>
+      <div class="ficha-pub-plazo">
+        <span>Tiempo restante</span>
+        <strong id="pub-reloj">--:--:--</strong>
+      </div>
+    </header>
+    <div class="ficha-pub-cuerpo">
+      <p id="pub-aviso" class="ayuda" role="status"></p>
+      <div id="pub-bloque-form">
+        <label class="campo">
+          <span>Nombre de quien rellena la ficha</span>
+          <input id="pub-nombre" maxlength="120" autocomplete="name">
+        </label>
+        <div class="ficha-pub-acciones">
+          <button id="btn-pub-guardar" class="boton" type="button">
+            Guardar ficha
+          </button>
+          <button id="btn-pub-finalizar" class="boton" type="button">
+            Finalizar ficha
+          </button>
+          <button id="btn-pub-pdf" class="boton boton-secundario"
+            type="button" hidden>
+            Descargar PDF
+          </button>
+        </div>
+        <div id="pub-faltan" class="ficha-faltan" hidden></div>
+        <div id="pub-ficha-cuerpo"></div>
+      </div>
+    </div>
+    <div id="pub-dialogo" class="ficha-dialogo" hidden>
+      <div class="ficha-dialogo-caja" role="dialog" aria-modal="true">
+        <h2 id="pub-dialogo-titulo"></h2>
+        <p id="pub-dialogo-texto"></p>
+        <ul id="pub-dialogo-faltan"></ul>
+        <p id="pub-dialogo-nota" class="ayuda"></p>
+        <div class="ficha-dialogo-acciones">
+          <button id="pub-dialogo-ok" class="boton" type="button">
+            Continuar
+          </button>
+          <button
+            id="pub-dialogo-edit"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Continuar editando
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="pantalla-app" class="app" hidden>
+    <aside class="sidebar">
+      <button
+        id="btn-menu"
+        class="btn-menu"
+        type="button"
+        aria-expanded="true"
+      >
+        <span class="btn-menu-flecha" aria-hidden="true"></span>
+        <span class="btn-menu-texto">Contraer menú</span>
+      </button>
+      <div class="marca">
+        <img src="./assets/logo-dts.png" alt="DTS Autoservicio">
+        <div>
+          <strong>DTS</strong>
+          <span>Autoservicio</span>
+        </div>
+      </div>
+      <p class="lado-titulo">Operación</p>
+      <nav id="nav-modulos" aria-label="Módulos"></nav>
+      <div class="lado-usuario">
+        <span id="usuario-nombre"></span>
+        <button id="btn-salir" class="boton boton-secundario" type="button">
+          Cerrar sesión
+        </button>
+      </div>
+    </aside>
+
+    <div class="contenido">
+      <p id="aviso-demo" class="aviso aviso-aviso" hidden></p>
+      <p id="aviso-global" class="aviso" hidden role="status"></p>
+
+      <section id="vista-listado" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Control de calidad</p>
+            <h1>Checklists de salida</h1>
+          </div>
+          <button id="btn-nuevo" class="boton" type="button">
+            Nuevo checklist
+          </button>
+        </header>
+
+        <form id="form-filtros" class="filtros">
+          <label class="campo">
+            <span>Proyecto / licitación</span>
+            <input id="filtro-proyecto" type="search" maxlength="160">
+          </label>
+          <label class="campo">
+            <span>Fecha de inspección</span>
+            <input id="filtro-fecha-inspeccion" type="date">
+          </label>
+          <label class="campo">
+            <span>Cliente / destino</span>
+            <input id="filtro-cliente" type="search" maxlength="160">
+          </label>
+          <label class="campo">
+            <span>Técnico responsable</span>
+            <input id="filtro-tecnico" type="search" maxlength="120">
+          </label>
+          <label class="campo">
+            <span>Número de serie</span>
+            <input id="filtro-serie" type="search" maxlength="80">
+          </label>
+          <label class="campo">
+            <span>Fecha de salida</span>
+            <input id="filtro-fecha-salida" type="date">
+          </label>
+          <label class="campo">
+            <span>Tipo de equipo</span>
+            <select id="filtro-tipo">
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Estado</span>
+            <select id="filtro-estado">
+              <option value="">Todos</option>
+              <option value="aprobado">Aprobado para salida</option>
+              <option value="rechazado">
+                Rechazado / requiere ajustes
+              </option>
+            </select>
+          </label>
+          <button
+            id="btn-limpiar-filtros"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Limpiar filtros
+          </button>
+        </form>
+
+        <p id="conteo-registros" class="conteo"></p>
+        <p id="estado-listado" class="estado-lista" hidden></p>
+        <div class="tabla-wrap tarjeta">
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Tipo</th>
+                <th>Fecha de salida</th>
+                <th>Proyecto / licitación</th>
+                <th>Cliente / destino</th>
+                <th>Técnico</th>
+                <th>N° de serie</th>
+                <th>MAC</th>
+                <th>IP</th>
+                <th>Inspección</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-cuerpo"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="vista-formulario" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">
+              DTS Autoservicio SpA · Control de calidad
+            </p>
+            <h1 id="titulo-formulario">Nuevo checklist</h1>
+            <p id="meta-registro" class="ayuda"></p>
+          </div>
+          <button
+            id="btn-volver"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Volver al listado
+          </button>
+        </header>
+
+        <div class="resumen" aria-live="polite">
+          <div>
+            <strong id="resumen-cuenta"></strong>
+            <span id="resumen-sugerido"></span>
+          </div>
+          <div class="barra" aria-hidden="true">
+            <span id="barra-avance"></span>
+          </div>
+          <div class="grupo-botones">
+            <button
+              id="btn-marcar-todo"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Marcar todo OK
+            </button>
+            <button
+              id="btn-limpiar-marcas"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Limpiar marcas
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="mensaje-formulario"
+          class="mensaje mensaje-bloque"
+          hidden
+          role="alert"
+        ></div>
+
+        <section class="tarjeta">
+          <h2>1. Información del proyecto y registro</h2>
+          <div id="tipo-checklist"></div>
+          <div class="rejilla">
+            <label class="campo" data-campo="proyecto">
+              <span>Proyecto / licitación</span>
+              <input id="campo-proyecto" maxlength="160" autocomplete="off">
+            </label>
+            <label class="campo" data-campo="fechaInspeccion">
+              <span>Fecha de inspección</span>
+              <input id="campo-fecha-inspeccion" type="date">
+            </label>
+            <label class="campo" data-campo="cliente">
+              <span>Cliente / destino</span>
+              <input id="campo-cliente" maxlength="160" autocomplete="off">
+            </label>
+            <label class="campo" data-campo="tecnico">
+              <span>Técnico responsable</span>
+              <input id="campo-tecnico" maxlength="120" autocomplete="name">
+            </label>
+            <label class="campo" data-campo="numeroSerie">
+              <span>Número de serie</span>
+              <input id="campo-serie" maxlength="80" autocomplete="off">
+            </label>
+            <label class="campo" data-campo="mac">
+              <span>MAC del equipo</span>
+              <input
+                id="campo-mac"
+                maxlength="17"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="AA:BB:CC:DD:EE:FF"
+              >
+            </label>
+            <label class="campo" data-campo="ip">
+              <span>IP del equipo</span>
+              <input
+                id="campo-ip"
+                maxlength="15"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="192.168.1.10"
+              >
+            </label>
+            <label class="campo" data-campo="fechaSalida">
+              <span>Fecha de salida</span>
+              <input id="campo-fecha-salida" type="date">
+            </label>
+          </div>
+          <p id="aviso-serie" class="mensaje" hidden></p>
+        </section>
+
+        <div id="secciones"></div>
+
+        <section class="tarjeta" data-campo="estado">
+          <h2 id="titulo-cierre">8. Control de cierre y aprobación de salida</h2>
+          <fieldset>
+            <legend>Estado de evaluación</legend>
+            <label class="radio">
+              <input
+                id="estado-aprobado"
+                name="estado"
+                type="radio"
+                value="aprobado"
+              >
+              <span>Aprobado para salida</span>
+            </label>
+            <label class="radio">
+              <input
+                id="estado-rechazado"
+                name="estado"
+                type="radio"
+                value="rechazado"
+              >
+              <span>Rechazado / requiere ajustes</span>
+            </label>
+          </fieldset>
+          <label class="campo" data-campo="observaciones">
+            <span>Observaciones adicionales</span>
+            <textarea
+              id="campo-observaciones"
+              maxlength="2000"
+              rows="4"
+            ></textarea>
+          </label>
+          <p class="ayuda">
+            La firma de control de calidad puede completarse después.
+          </p>
+          <div class="firmas">
+            <div data-campo="firmaTecnico">
+              <label class="campo">
+                <span>Firma técnico responsable (DTS)</span>
+                <input
+                  id="firma-tecnico-nombre"
+                  maxlength="120"
+                  autocomplete="name"
+                >
+              </label>
+              <canvas
+                id="canvas-tecnico"
+                width="440"
+                height="140"
+              ></canvas>
+              <button
+                id="btn-limpiar-firma-tecnico"
+                class="boton boton-secundario"
+                type="button"
+              >
+                Limpiar firma
+              </button>
+            </div>
+            <div>
+              <label class="campo">
+                <span>Firma control de calidad / recepción</span>
+                <input
+                  id="firma-calidad-nombre"
+                  maxlength="120"
+                  autocomplete="name"
+                >
+              </label>
+              <canvas
+                id="canvas-calidad"
+                width="440"
+                height="140"
+              ></canvas>
+              <button
+                id="btn-limpiar-firma-calidad"
+                class="boton boton-secundario"
+                type="button"
+              >
+                Limpiar firma
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div class="barra-acciones">
+          <button id="btn-guardar" class="boton" type="button">
+            Guardar
+          </button>
+          <button id="btn-guardar-pdf" class="boton" type="button">
+            Guardar y descargar PDF
+          </button>
+          <button id="btn-pdf" class="boton boton-secundario" type="button">
+            Descargar PDF
+          </button>
+        </div>
+      </section>
+
+      <section id="vista-cartillas" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Uso interno · Producción</p>
+            <h1>Cartillas de ruta</h1>
+          </div>
+          <button id="btn-cartilla-nueva" class="boton" type="button">
+            Nueva cartilla
+          </button>
+        </header>
+
+        <form id="form-filtros-cartilla" class="filtros">
+          <label class="campo">
+            <span>Cliente</span>
+            <input id="cf-cliente" type="search" maxlength="160">
+          </label>
+          <label class="campo">
+            <span>Modelo</span>
+            <input id="cf-modelo" type="search" maxlength="120">
+          </label>
+          <label class="campo">
+            <span>Número de serie</span>
+            <input id="cf-serie" type="search" maxlength="80">
+          </label>
+          <label class="campo">
+            <span>Creada por</span>
+            <input id="cf-creada" type="search" maxlength="120">
+          </label>
+          <label class="campo">
+            <span>Tipo de equipo</span>
+            <select id="cf-tipo">
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <button
+            id="btn-cartilla-limpiar-filtros"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Limpiar filtros
+          </button>
+        </form>
+
+        <p id="cartilla-conteo" class="conteo"></p>
+        <p id="cartilla-estado" class="estado-lista" hidden></p>
+        <div class="tabla-wrap tarjeta">
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Tipo</th>
+                <th>Cliente</th>
+                <th>Modelo</th>
+                <th>N° de serie</th>
+                <th>N° de parte</th>
+                <th>Creada por</th>
+                <th>Aprobada por</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="cartilla-tabla"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="vista-cartilla" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">DTS Autoservicio SpA · Uso interno</p>
+            <h1 id="cartilla-titulo">Nueva cartilla de ruta</h1>
+            <p id="cartilla-meta" class="ayuda"></p>
+          </div>
+          <button
+            id="btn-cartilla-volver"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Volver a cartillas
+          </button>
+        </header>
+
+        <div
+          id="cartilla-mensaje"
+          class="mensaje mensaje-bloque"
+          hidden
+          role="alert"
+        ></div>
+
+        <section class="tarjeta">
+          <h2>Responsables</h2>
+          <div class="rejilla rejilla-2">
+            <label class="campo" data-campo="c-creada">
+              <span>Creada por</span>
+              <input id="c-creada" maxlength="120" autocomplete="name">
+            </label>
+            <label class="campo">
+              <span>Aprobada por</span>
+              <input id="c-aprobada" maxlength="120" autocomplete="off">
+            </label>
+          </div>
+        </section>
+
+        <section class="tarjeta">
+          <p class="banda">Datos generales</p>
+          <div id="tipo-cartilla"></div>
+          <div class="rejilla">
+            <label class="campo" data-campo="c-cliente">
+              <span>Cliente</span>
+              <input id="c-cliente" maxlength="160" autocomplete="off">
+            </label>
+            <label class="campo" data-campo="c-modelo">
+              <span>Modelo</span>
+              <input id="c-modelo" maxlength="120" autocomplete="off">
+            </label>
+            <label class="campo" data-campo="c-serie">
+              <span>N° de serie</span>
+              <input id="c-serie" maxlength="80" autocomplete="off">
+            </label>
+            <label class="campo">
+              <span>N° de parte</span>
+              <input id="c-parte" maxlength="80" autocomplete="off">
+            </label>
+          </div>
+        </section>
+
+        <div id="cartilla-secciones"></div>
+
+        <section class="tarjeta">
+          <p class="banda">Datos de finalización del proceso</p>
+          <div id="cartilla-final" class="finalizacion"></div>
+        </section>
+
+        <div class="barra-acciones">
+          <button id="btn-cartilla-guardar" class="boton" type="button">
+            Guardar
+          </button>
+          <button
+            id="btn-cartilla-guardar-pdf"
+            class="boton"
+            type="button"
+          >
+            Guardar y descargar PDF
+          </button>
+          <button
+            id="btn-cartilla-pdf"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Descargar PDF
+          </button>
+        </div>
+      </section>
+
+      <section id="vista-costos" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Costos hardware</p>
+            <h1>Base de costos HW</h1>
+            <p class="ayuda">
+              Costo actualizado por modelo, línea de producto y
+              cliente o configuración.
+            </p>
+          </div>
+          <div class="grupo-botones">
+            <button
+              id="btn-costo-csv"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Exportar CSV
+            </button>
+            <button
+              id="btn-costo-resumen"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Resumen PDF
+            </button>
+            <button id="btn-costo-nuevo" class="boton" type="button">
+              Nuevo costo
+            </button>
+          </div>
+        </header>
+        <div id="costo-kpis" class="kpis"></div>
+        <form id="form-filtros-costo" class="filtros">
+          <label class="campo">
+            <span>Línea de producto</span>
+            <select id="kf-linea">
+              <option value="">Todas</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Tipo de equipo</span>
+            <select id="kf-tipo">
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Buscar modelo o documento</span>
+            <input id="kf-texto" type="search" maxlength="160">
+          </label>
+          <button
+            id="btn-costo-limpiar"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Limpiar filtros
+          </button>
+        </form>
+        <p id="costo-conteo" class="conteo"></p>
+        <p id="costo-estado" class="estado-lista" hidden></p>
+        <div id="costo-vacio" class="vacio tarjeta" hidden>
+          <p>La base de costos está vacía.</p>
+          <button id="btn-costo-importar" class="boton" type="button">
+            Importar planilla de referencia
+          </button>
+        </div>
+        <div class="tabla-wrap tarjeta">
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Línea</th>
+                <th>Tipo</th>
+                <th>Modelo</th>
+                <th class="derecha">Costo</th>
+                <th>Actualizado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="costo-tabla"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="vista-costo" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">DTS Autoservicio SpA · Uso interno</p>
+            <h1 id="costo-titulo">Nuevo costo de hardware</h1>
+            <p id="costo-meta" class="ayuda"></p>
+          </div>
+          <button
+            id="btn-costo-volver"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Volver a costos
+          </button>
+        </header>
+        <div
+          id="costo-mensaje"
+          class="mensaje mensaje-bloque"
+          hidden
+          role="alert"
+        ></div>
+        <section class="tarjeta">
+          <h2>Clasificación</h2>
+          <div class="rejilla rejilla-2">
+            <label class="campo" data-campo="k-linea">
+              <span>Línea de producto</span>
+              <select id="k-linea">
+                <option value="">Selecciona…</option>
+              </select>
+            </label>
+          </div>
+          <div id="tipo-costo"></div>
+        </section>
+        <section class="tarjeta">
+          <h2>Equipo</h2>
+          <div class="rejilla rejilla-2">
+            <label class="campo" data-campo="k-modelo">
+              <span>Modelo</span>
+              <input
+                id="k-modelo"
+                maxlength="120"
+                autocomplete="off"
+                list="k-modelos-lista"
+              >
+              <datalist id="k-modelos-lista"></datalist>
+              <small id="k-modelo-ayuda" class="ayuda"></small>
+            </label>
+            <div class="campo" data-campo="k-cliente-cotizacion">
+              <label for="k-cliente-cotizacion">
+                Cliente de la cotización
+              </label>
+              <select id="k-cliente-cotizacion">
+                <option value="">Sin cliente</option>
+              </select>
+              <small id="k-cliente-ayuda" class="ayuda"></small>
+              <div class="grupo-botones cliente-acciones">
+                <button
+                  id="btn-cliente-nuevo"
+                  class="boton boton-secundario"
+                  type="button"
+                >
+                  Guardar piezas como cliente nuevo
+                </button>
+                <button
+                  id="btn-cliente-eliminar"
+                  class="boton boton-peligro"
+                  type="button"
+                  hidden
+                >
+                  Eliminar este cliente
+                </button>
+              </div>
+              <div id="cliente-nuevo-caja" class="cliente-nuevo" hidden>
+                <p class="ayuda">
+                  Se guardan las piezas marcadas ahora en todas las
+                  pestañas (y si lleva HH). Después podrás elegir este
+                  cliente en cualquier costo.
+                </p>
+                <div class="rejilla rejilla-2">
+                  <label class="campo">
+                    <span>Nombre del cliente</span>
+                    <input
+                      id="k-cliente-nombre"
+                      maxlength="80"
+                      autocomplete="off"
+                      placeholder="Ej.: Municipalidad de Maipú"
+                    >
+                  </label>
+                  <label class="campo">
+                    <span>Año</span>
+                    <input
+                      id="k-cliente-anio"
+                      type="number"
+                      min="2020"
+                      max="2100"
+                      step="1"
+                    >
+                  </label>
+                </div>
+                <p id="k-cliente-nuevo-error" class="mensaje"></p>
+                <div class="grupo-botones">
+                  <button id="btn-cliente-guardar" class="boton" type="button">
+                    Guardar cliente
+                  </button>
+                  <button
+                    id="btn-cliente-cancelar"
+                    class="boton boton-secundario"
+                    type="button"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+            <label class="campo">
+              <span>Documento de costeo</span>
+              <input
+                id="k-referencia"
+                maxlength="200"
+                autocomplete="off"
+                placeholder="Nombre del archivo de costeo"
+              >
+            </label>
+            <label class="campo" data-campo="k-fecha">
+              <span>Fecha de actualización</span>
+              <input id="k-fecha" type="date">
+            </label>
+          </div>
+        </section>
+        <section class="tarjeta">
+          <h2>Hoja de costeo</h2>
+          <details class="ayuda-costeo">
+            <summary id="costo-ayuda-titulo"></summary>
+            <ol id="costo-ayuda-lista"></ol>
+          </details>
+          <h3 class="costeo-subtitulo">Parámetros del costeo</h3>
+          <div class="rejilla costeo-parametros">
+            <label class="campo" data-campo="k-moneda">
+              <span>Moneda del costo</span>
+              <select id="k-moneda"></select>
+            </label>
+            <label class="campo" data-campo="k-equipos">
+              <span>Cantidad de equipos</span>
+              <input
+                id="k-equipos"
+                inputmode="numeric"
+                maxlength="4"
+                autocomplete="off"
+              >
+            </label>
+            <label class="campo" data-campo="k-cambio-usd">
+              <span>Dólar (CLP por 1 USD)</span>
+              <input
+                id="k-cambio-fecha"
+                type="date"
+                aria-label="Día de la cotización del dólar"
+              >
+              <input
+                id="k-cambio-usd"
+                inputmode="decimal"
+                maxlength="12"
+                autocomplete="off"
+              >
+            </label>
+            <label class="campo" data-campo="k-cambio-uf">
+              <span>UF (CLP por 1 UF)</span>
+              <input
+                id="k-cambio-uf"
+                inputmode="decimal"
+                maxlength="12"
+                autocomplete="off"
+              >
+            </label>
+          </div>
+          <div data-campo="k-lineas" class="bloque-desglose">
+            <h3>Componentes por equipo</h3>
+            <p class="ayuda">
+              Marca lo que lleva 1 equipo y completa su precio. Si no
+              incluyes componentes, escribe el costo por equipo abajo.
+            </p>
+            <div
+              id="costo-pestanas"
+              class="costeo-pestanas"
+              role="tablist"
+              aria-label="Categorías de componentes"
+            ></div>
+            <div id="costo-lineas" class="costeo-paneles"></div>
+          </div>
+          <div class="costeo-cierre">
+            <div class="costeo-resumen">
+              <h3 class="costeo-subtitulo">Resumen por categoría</h3>
+              <p id="costo-resumen-vacio" class="ayuda">
+                Agrega componentes para ver el resumen.
+              </p>
+              <table id="costo-resumen" class="tabla-resumen" hidden>
+                <thead>
+                  <tr>
+                    <th>Categoría</th>
+                    <th>Ítems</th>
+                    <th>Subtotal</th>
+                    <th>% del total</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="costeo-totales">
+              <label class="campo" data-campo="k-costo">
+                <span>Costo por equipo</span>
+                <input
+                  id="k-costo"
+                  inputmode="decimal"
+                  maxlength="20"
+                  autocomplete="off"
+                >
+                <small id="k-costo-ayuda" class="ayuda"></small>
+                <p id="costo-equivale" class="ayuda"></p>
+              </label>
+              <div class="costeo-lote">
+                <span id="costo-lote-titulo">Costo total del lote</span>
+                <strong id="costo-total"></strong>
+              </div>
+            </div>
+          </div>
+          <label class="campo">
+            <span>Observaciones</span>
+            <textarea id="k-obs" maxlength="600" rows="3"></textarea>
+          </label>
+        </section>
+        <section class="tarjeta">
+          <h2 id="costo-historial-titulo">Historial de cotización</h2>
+          <p id="costo-historial-ayuda" class="ayuda"></p>
+          <p id="costo-historial-vacio" class="ayuda" hidden></p>
+          <div class="tabla-wrap">
+            <table class="tabla-resumen tabla-historial">
+              <thead><tr id="costo-historial-cabeza"></tr></thead>
+              <tbody id="costo-historial"></tbody>
+            </table>
+          </div>
+        </section>
+        <div class="barra-acciones">
+          <button id="btn-costo-guardar" class="boton" type="button">
+            Guardar
+          </button>
+          <button id="btn-costo-guardar-pdf" class="boton" type="button">
+            Guardar y descargar PDF
+          </button>
+          <button
+            id="btn-costo-pdf"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Descargar PDF
+          </button>
+          <button
+            id="btn-costo-duplicar"
+            class="boton boton-secundario"
+            type="button"
+            hidden
+          >
+            Duplicar como costo nuevo
+          </button>
+        </div>
+      </section>
+
+      <section id="vista-modelos" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Catálogo de equipos</p>
+            <h1>Modelos</h1>
+            <p class="ayuda">
+              Nombre, tipo, clientes e imagen. La ficha técnica
+              se completa en Especificaciones técnicas.
+            </p>
+          </div>
+          <div class="encabezado-acciones">
+            <button id="btn-modelo-todo" class="boton" type="button">
+              Exportar PDF general
+            </button>
+            <button id="btn-modelo-nuevo" class="boton" type="button">
+              Nuevo modelo
+            </button>
+          </div>
+        </header>
+        <form id="form-filtros-modelo" class="filtros">
+          <label class="campo">
+            <span>Tipo</span>
+            <select id="mf-tipo">
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Estado</span>
+            <select id="mf-estado">
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Buscar modelo o cliente</span>
+            <input id="mf-texto" type="search" maxlength="120">
+          </label>
+          <button
+            id="btn-modelo-limpiar"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Limpiar filtros
+          </button>
+        </form>
+        <p id="modelo-conteo" class="conteo"></p>
+        <p id="modelo-estado" class="estado-lista" hidden></p>
+        <div id="modelo-vacio" class="vacio tarjeta" hidden>
+          <p>El catálogo de modelos está vacío.</p>
+          <button id="btn-modelo-importar" class="boton" type="button">
+            Importar planilla de referencia
+          </button>
+        </div>
+        <div id="modelo-grid" class="modelos-grid"></div>
+      </section>
+
+      <section id="vista-modelo" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Catálogo de equipos</p>
+            <h1 id="modelo-titulo">Nuevo modelo</h1>
+            <p id="modelo-meta" class="ayuda"></p>
+          </div>
+          <button
+            id="btn-modelo-volver"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Volver a modelos
+          </button>
+        </header>
+        <div
+          id="modelo-mensaje"
+          class="mensaje mensaje-bloque"
+          hidden
+          role="alert"
+        ></div>
+        <section class="tarjeta">
+          <h2>Datos generales</h2>
+          <div id="tipo-modelo"></div>
+          <div class="rejilla">
+            <label class="campo" data-campo="m-nombre">
+              <span>Modelo</span>
+              <input
+                id="m-nombre"
+                maxlength="120"
+                autocomplete="off"
+                placeholder="Ej.: T22-M41 Aconcagua"
+              >
+            </label>
+            <label class="campo">
+              <span>Otro nombre</span>
+              <input id="m-otro" maxlength="120" autocomplete="off">
+            </label>
+            <label class="campo">
+              <span>Estado</span>
+              <select id="m-estado"></select>
+            </label>
+          </div>
+          <div class="rejilla rejilla-2">
+            <label class="campo">
+              <span>Clientes que tienen el equipo</span>
+              <textarea id="m-clientes" rows="5" maxlength="7000"></textarea>
+              <small class="ayuda">Un cliente por línea.</small>
+            </label>
+            <div class="campo">
+              <span>Imagen referencial</span>
+              <div class="imagen-modelo">
+                <img id="m-imagen-vista" alt="" hidden>
+                <p id="m-imagen-vacia" class="ayuda">Sin imagen</p>
+              </div>
+              <input
+                id="m-imagen"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+              >
+              <small class="ayuda">
+                PNG, JPG o WEBP. Se reduce automáticamente.
+              </small>
+              <button
+                id="btn-modelo-quitar-imagen"
+                class="boton boton-secundario"
+                type="button"
+                hidden
+              >
+                Quitar imagen
+              </button>
+            </div>
+          </div>
+          <label class="campo">
+            <span>Notas</span>
+            <textarea id="m-notas" rows="2" maxlength="600"></textarea>
+          </label>
+        </section>
+        <div class="barra-acciones">
+          <button id="btn-modelo-guardar" class="boton" type="button">
+            Guardar
+          </button>
+          <button
+            id="btn-modelo-guardar-pdf"
+            class="boton"
+            type="button"
+          >
+            Guardar y descargar PDF
+          </button>
+          <button
+            id="btn-modelo-pdf"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Descargar PDF
+          </button>
+        </div>
+      </section>
+
+      <section id="vista-especificaciones" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Fichas de equipo</p>
+            <h1>Especificaciones técnicas</h1>
+            <p class="ayuda">
+              Ficha técnica y clientes de cada equipo.
+            </p>
+          </div>
+          <button id="btn-espec-todo" class="boton" type="button">
+            Exportar PDF general
+          </button>
+        </header>
+        <form id="form-filtros-espec" class="filtros">
+          <label class="campo">
+            <span>Tipo</span>
+            <select id="ef-tipo">
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Buscar modelo</span>
+            <input id="ef-texto" type="search" maxlength="120">
+          </label>
+          <button
+            id="btn-espec-limpiar"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Limpiar filtros
+          </button>
+        </form>
+        <p id="espec-conteo" class="conteo"></p>
+        <p id="espec-estado" class="estado-lista" hidden></p>
+        <div id="espec-vacio" class="vacio tarjeta" hidden>
+          <p>Todavía no hay modelos. Créalos en Modelos.</p>
+          <button id="btn-espec-modelos" class="boton" type="button">
+            Ir a modelos
+          </button>
+        </div>
+        <div id="espec-grid" class="ref-grid"></div>
+        <div id="espec-popover" class="ref-popover" hidden></div>
+      </section>
+
+      <section id="vista-especificacion" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Fichas de equipo</p>
+            <h1 id="espec-titulo">Especificaciones técnicas</h1>
+            <p id="espec-meta" class="ayuda"></p>
+          </div>
+          <button
+            id="btn-espec-volver"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Volver a especificaciones
+          </button>
+        </header>
+        <section class="tarjeta">
+          <h2>Imagen referencial</h2>
+          <div class="imagen-modelo">
+            <img id="e-imagen-vista" alt="" hidden>
+            <p id="e-imagen-vacia" class="ayuda">Sin imagen</p>
+          </div>
+          <input
+            id="e-imagen"
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+          >
+          <small class="ayuda">
+            PNG, JPG o WEBP. Se reduce automáticamente.
+          </small>
+          <button
+            id="btn-espec-quitar-imagen"
+            class="boton boton-secundario"
+            type="button"
+            hidden
+          >
+            Quitar imagen
+          </button>
+        </section>
+        <section class="tarjeta">
+          <h2>Ficha técnica</h2>
+          <div id="e-ficha" class="ficha-grupos"></div>
+        </section>
+        <div class="barra-acciones">
+          <button id="btn-espec-guardar" class="boton" type="button">
+            Guardar
+          </button>
+          <button id="btn-espec-guardar-pdf" class="boton" type="button">
+            Guardar y descargar PDF
+          </button>
+          <button
+            id="btn-espec-pdf"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Descargar PDF
+          </button>
+        </div>
+      </section>
+
+      <section id="vista-ficha" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Clever Q2</p>
+            <h1>Ficha de configuración</h1>
+            <p id="ficha-ayuda" class="ayuda">
+              Cada ficha se guarda con el nombre de su licitación.
+            </p>
+          </div>
+          <div class="ficha-guardar">
+            <label class="campo">
+              Licitación
+              <input id="ficha-licitacion" maxlength="160"
+                autocomplete="off">
+            </label>
+            <label class="campo">
+              Fichas guardadas
+              <select id="ficha-lista">
+                <option value="">Nueva ficha</option>
+              </select>
+            </label>
+            <button id="btn-ficha-guardar" class="boton" type="button">
+              Guardar ficha
+            </button>
+          </div>
+        </header>
+        <p id="ficha-aviso" class="ayuda" role="status"></p>
+        <div id="ficha-cuerpo"></div>
+      </section>
+
+      <section id="vista-fichas-envio" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Configuración para el cliente</p>
+            <h1>Fichas de licitaciones</h1>
+          </div>
+        </header>
+        <form id="form-envio-nueva" class="filtros ficha-envio-form">
+          <label class="campo">
+            <span>Nombre de la licitación</span>
+            <input id="envio-licitacion" maxlength="160"
+              autocomplete="off">
+          </label>
+          <label class="campo">
+            <span>Días de plazo</span>
+            <input id="envio-dias" type="number" min="1" max="90"
+              value="7">
+          </label>
+          <label class="campo">
+            <span>O fecha y hora límite</span>
+            <input id="envio-limite" type="datetime-local">
+          </label>
+          <button id="btn-envio-generar" class="boton" type="button">
+            Generar ficha
+          </button>
+          <label class="campo ficha-envio-link">
+            <span>Enlace para el cliente</span>
+            <input id="envio-enlace" readonly>
+          </label>
+        </form>
+        <p id="conteo-envios" class="conteo"></p>
+        <p id="estado-envios" class="estado-lista" hidden></p>
+        <div class="tabla-wrap tarjeta">
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Licitación</th>
+                <th>Quién rellenó</th>
+                <th>Creación</th>
+                <th>Modificación</th>
+                <th>Finalización</th>
+                <th>Plazo</th>
+                <th>Tiempo restante</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="envio-cuerpo"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="vista-ficha-envio" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Ficha enviada al cliente</p>
+            <h1 id="envio-meta-licitacion">Licitación</h1>
+            <p id="envio-detalle-aviso" class="ayuda" role="status"></p>
+          </div>
+          <button id="btn-envio-volver" class="boton boton-secundario"
+            type="button">
+            Volver al listado
+          </button>
+        </header>
+        <dl class="ficha-envio-meta">
+          <div><dt>Quién rellenó</dt><dd id="envio-meta-quien">—</dd></div>
+          <div><dt>Estado</dt><dd id="envio-meta-estado">—</dd></div>
+          <div><dt>Creación</dt><dd id="envio-meta-creado">—</dd></div>
+          <div><dt>Modificación</dt>
+            <dd id="envio-meta-modificado">—</dd></div>
+          <div><dt>Finalización</dt><dd id="envio-meta-fin">—</dd></div>
+          <div><dt>Plazo</dt><dd id="envio-meta-plazo">—</dd></div>
+          <div><dt>Tiempo restante</dt>
+            <dd id="envio-meta-resto">—</dd></div>
+        </dl>
+        <div class="ficha-envio-plazo">
+          <label class="campo">
+            Enlace
+            <input id="envio-detalle-enlace" readonly>
+          </label>
+          <button id="btn-envio-copiar" class="boton boton-secundario"
+            type="button">
+            Copiar enlace
+          </button>
+          <label class="campo">
+            Sumar días al plazo
+            <input id="envio-extra-dias" type="number" min="1"
+              max="90" value="3">
+          </label>
+          <button id="btn-envio-plazo" class="boton boton-secundario"
+            type="button">
+            Ampliar plazo
+          </button>
+          <button id="btn-envio-guardar" class="boton" type="button">
+            Guardar cambios
+          </button>
+          <button id="btn-envio-pdf" class="boton boton-secundario"
+            type="button" hidden>
+            Descargar PDF
+          </button>
+          <button id="btn-envio-eliminar" class="boton boton-peligro"
+            type="button">
+            Eliminar licitación
+          </button>
+        </div>
+        <h2>Historial de modificaciones</h2>
+        <ul id="envio-historial" class="ficha-envio-hist"></ul>
+        <div id="envio-ficha-cuerpo"></div>
+      </section>
+    </div>
+  </div>
+
+  <dialog id="modal-exito">
+    <h2 id="modal-titulo">Checklist creado</h2>
+    <p id="modal-texto"></p>
+    <button id="modal-aceptar" class="boton" type="button">
+      Volver al listado
+    </button>
+  </dialog>
+  <dialog id="modal-confirmar">
+    <h2 id="confirmar-titulo">Confirmar</h2>
+    <p id="confirmar-texto"></p>
+    <div class="dialogo-acciones">
+      <button id="confirmar-cancelar" class="boton boton-secundario"
+        type="button">
+        Cancelar
+      </button>
+      <button id="confirmar-ok" class="boton boton-peligro"
+        type="button">
+        Eliminar
+      </button>
+    </div>
+  </dialog>
+  <div id="cortina" hidden>
+    <p>Generando PDF…</p>
+  </div>
+  <article id="zona-pdf" hidden></article>
+  <noscript>
+    <p>Activa JavaScript para usar el panel.</p>
+  </noscript>
+  <script type="module" src="./js/main.js?v=73"></script>
+</body>
+</html>

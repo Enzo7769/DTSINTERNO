@@ -1,0 +1,14 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /fichasCliente/{token}/respuestas.pdf {
+      allow read: if token.size() >= 16 && token.size() <= 80;
+      allow write: if token.size() >= 16
+        && token.size() <= 80
+        && request.resource.size < 8 * 1024 * 1024
+        && request.resource.contentType.matches(
+          "application/pdf"
+        );
+    }
+  }
+}
