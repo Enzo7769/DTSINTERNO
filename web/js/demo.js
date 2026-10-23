@@ -11,6 +11,7 @@ import { SECCIONES } from "./catalogo.js";
 import { normalizarCartilla } from "./cartilla-validacion.js";
 import { normalizarCosto } from "./costo-validacion.js";
 import { PLANILLA_COSTOS, PLANILLA_MODELOS } from "./datos-planilla.js";
+import { hoyIso } from "./fechas.js";
 import { normalizarModelo } from "./modelo-validacion.js";
 import { normalizarLocal } from "./recepcion-datos.js";
 import { normalizarChecklist } from "./validacion.js";
@@ -242,11 +243,24 @@ function armar(base) {
 }
 
 /**
+ * Fecha AAAA-MM-DD a n días de hoy.
+ * @param {number} n negativo hacia atrás
+ * @returns {string}
+ */
+function correrDias(n) {
+  const fecha = new Date(`${hoyIso()}T12:00:00Z`);
+  fecha.setUTCDate(fecha.getUTCDate() + n);
+  return fecha.toISOString().slice(0, 10);
+}
+
+/**
  * Recepción de equipos de ejemplo: locales Líder en varias regiones,
  * con equipos en distintas etapas y algunas revisiones con novedades.
  * @returns {object[]}
  */
 export function semillaRecepcion() {
+  // Retiros relativos a hoy, para ver atrasados, hoy y próximos.
+  const RETIRO_DEMO = { LID08: -4, LID10: 0, LID11: 2, LID14: 6 };
   const todoOk = (tipo, extra) => {
     const lista = ["gabinete", "cerradura", "base", "pantalla", "cpu",
       "disco", "ram", "fuente", "lector", "parlantes", "cables",
@@ -310,7 +324,7 @@ export function semillaRecepcion() {
     contrato: "Walmart Líder",
     codigo, nombre, region, comuna, direccion,
     contacto: "Jefe de local",
-    retiroProgramado: "2026-10-28",
+    retiroProgramado: correrDias(RETIRO_DEMO[codigo] ?? -10),
     equipos
   }), `local-recepcion-${i + 1}`, i + 1));
 }

@@ -4374,6 +4374,93 @@ tr.fila-anterior td.fuerte { font-weight: 600; }
 
 .rc-region.elegida { background: #e3effc; box-shadow: inset 3px 0 0 #184f95; }
 
+.rc-retiros { margin-bottom: 14px; }
+
+.rc-retiros-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.rc-retiro-col {
+  border: 1px solid var(--linea);
+  border-top: 4px solid var(--c);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--blanco);
+}
+
+.rc-retiro-atrasados { --c: #b42318; --fondo: #fff4f3; }
+
+.rc-retiro-hoy { --c: #b26b00; --fondo: #fff8eb; }
+
+.rc-retiro-proximos { --c: #2a78d6; --fondo: #f1f7fe; }
+
+.rc-retiro-col h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: var(--c);
+}
+
+.rc-retiro-icono {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--c);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.rc-retiro-n {
+  margin-left: auto;
+  min-width: 26px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--fondo);
+  text-align: center;
+}
+
+.rc-retiro-col ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rc-retiro-col a {
+  display: grid;
+  gap: 2px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--fondo);
+  color: inherit;
+  text-decoration: none;
+}
+
+.rc-retiro-col a:hover,
+.rc-retiro-col a:focus-visible { outline: 2px solid var(--c); }
+
+.rc-retiro-col strong { font-size: 14px; }
+
+.rc-retiro-cuando { color: var(--c); font-size: 13px; font-weight: 700; }
+
+.rc-retiro-col small { color: var(--tinta-suave); font-size: 12px; }
+
+.rc-atraso {
+  display: block;
+  color: #b42318;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .rc-fila { cursor: pointer; }
 
 .rc-fila:hover td { background: #f7fbfd; }
@@ -4400,6 +4487,7 @@ tr.fila-anterior td.fuerte { font-weight: 600; }
   .rc-region { grid-template-columns: 1fr auto; }
   .rc-region-pista { grid-column: 1 / -1; grid-row: 2; }
   .rc-kpis { grid-template-columns: 1fr 1fr; }
+  .rc-retiros-grid { grid-template-columns: 1fr; }
   .rl-todo-ok { margin-left: 0; width: 100%; }
   /* La tabla de locales pasa a tarjetas: una por local. */
   .rc-tabla-locales thead { display: none; }
