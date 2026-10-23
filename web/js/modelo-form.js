@@ -2,14 +2,18 @@
  * Propósito: Alta y edición de un modelo, sin su ficha técnica.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-02
- * Dependencias: errores, hw-catalogo, imagen-modelo, logger,
- *   modelo-pdf, modelo-repositorio, modelo-textos,
+ * Dependencias: cambios-pendientes, errores, hw-catalogo,
+ *   imagen-modelo, logger, modelo-pdf, modelo-repositorio, modelo-textos,
  *   modelo-validacion, tipos-equipo, ui
  *
  * Al guardar se conserva la ficha. Esa se edita en
  * Especificaciones técnicas.
  */
 
+import {
+  cambiosGuardados,
+  vigilarCambios
+} from "./cambios-pendientes.js";
 import { mensajeError } from "./errores.js";
 import { ESTADOS_MODELO, TIPOS_MODELO } from "./hw-catalogo.js";
 import { reducirImagen } from "./imagen-modelo.js";
@@ -47,6 +51,7 @@ let guardando = false;
  * @returns {void}
  */
 export function iniciarModelo(alGuardar) {
+  vigilarCambios("vista-modelo");
   pintarTipo(porId("tipo-modelo"), GRUPO_MODELO, "m-tipo", TIPOS_MODELO,
     MT.leyendaTipo);
   ESTADOS_MODELO.forEach((estado) => {
@@ -104,7 +109,9 @@ export async function mostrarModeloNuevo() {
   porId("modelo-meta").textContent = MT.sinGuardar;
   document.title = MT.tituloNuevo;
   escribir({});
+  porId("btn-modelo-ficha").hidden = true;
   mostrarVista("vista-modelo");
+  cambiosGuardados("vista-modelo");
 }
 
 /**
@@ -125,7 +132,11 @@ export async function mostrarModeloEdicion(id) {
     `N° ${registro.numero || "—"} · ${registro.creadoPorEmail || ""}`;
   document.title = MT.tituloEdicion;
   escribir(registro);
+  const ficha = porId("btn-modelo-ficha");
+  ficha.href = `#/especificacion?id=${encodeURIComponent(registro.id)}`;
+  ficha.hidden = false;
   mostrarVista("vista-modelo");
+  cambiosGuardados("vista-modelo");
 }
 
 /**
@@ -210,6 +221,7 @@ async function guardar(conPdf) {
   try {
     const fresco = await guardarModelo(limpio, actual, autor);
     actual = fresco;
+    cambiosGuardados("vista-modelo");
     if (conPdf) await descargarModeloPdf(fresco);
     mostrarExito(
       nuevo ? MT.creadoTitulo : MT.actualizadoTitulo,

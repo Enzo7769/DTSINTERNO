@@ -87,7 +87,7 @@ export const CT = {
     "Esta pestaña no tiene lista. Agrega los componentes a mano.",
   sinFiltro: "Ningún componente coincide con la búsqueda.",
   cargandoLista: "Cargando lista de componentes…",
-  manual: "Manual",
+  manual: "Agregados a mano",
   cotizacion: "Cotización",
   conversion: "Convertido con el tipo de cambio",
   tituloPdf: "Ficha de costo de hardware",
@@ -155,8 +155,14 @@ export const CT = {
   verModelo: "Ver modelo",
   modeloCatalogo: "Modelo del catálogo.",
   modeloLibre:
-    "No está en el catálogo. Puedes agregarlo en «Modelos y "
-    + "especificaciones técnicas».",
+    "No está en el catálogo. Créalo en «Modelos» para ver su "
+    + "ficha técnica junto a este costo.",
+  cambioReferencia:
+    "No se pudo consultar la cotización: son valores de "
+    + "referencia. Revísalos o elige otro día.",
+  cambioManual:
+    "Dólar o UF escritos a mano. Elige un día para usar su "
+    + "cotización.",
   csvArchivo: "Base_costos_HW.csv",
   resumenArchivo: "Resumen_costos_HW.pdf",
   hhIncluir: "Incluir HH en este costo",
@@ -204,7 +210,10 @@ export const AYUDA_COSTEO = [
       + "Ferretería, Insumos, SW, HH y Otros. Cada pestaña muestra "
       + "su lista completa; el número junto al nombre indica "
       + "cuántos componentes están incluidos. Usa «Buscar en esta "
-      + "pestaña» o «Solo seleccionados» para encontrar rápido."
+      + "pestaña» o «Solo seleccionados» para encontrar rápido. Al "
+      + "abrir un costo guardado, las pestañas parten mostrando solo "
+      + "lo incluido: desmarca «Solo seleccionados» para ver la "
+      + "lista completa."
   },
   {
     titulo: "5. Incluir componentes",
@@ -269,6 +278,14 @@ export function textoHhValorLote(n) {
 export function textoClienteGuardado(nombre) {
   const corto = String(nombre || "").slice(0, 80);
   return `Cliente «${corto}» guardado. Ya aparece en la lista.`;
+}
+
+/**
+ * @param {string} fecha día de la cotización, ya formateado
+ * @returns {string}
+ */
+export function textoCambioDia(fecha) {
+  return `Dólar y UF del ${fecha}.`;
 }
 
 /**

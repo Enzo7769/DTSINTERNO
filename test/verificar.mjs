@@ -19,7 +19,17 @@ import {
   semillaCostos,
   semillaModelos
 } from "../web/js/demo.js";
-import { formatoMonto, leerMonto } from "../web/js/hw-catalogo.js";
+import {
+  textoAvance,
+  textoCostosModelo
+} from "../web/js/espec-textos.js";
+import {
+  CAMPOS_FICHA,
+  GRUPOS_FICHA,
+  avanceFicha,
+  formatoMonto,
+  leerMonto
+} from "../web/js/hw-catalogo.js";
 import {
   normalizarModelo,
   validarModelo
@@ -1002,6 +1012,28 @@ afirmar(
       red: []
     }).red.length === 2,
   "la red se arma por tótem y visor con IP por octetos"
+);
+
+const parcial = avanceFicha({ pantalla: "LCD 22\"", peso: "  ", audio: "x" });
+const llena = Object.fromEntries(CAMPOS_FICHA.map((campo) => [campo.id, "s"]));
+afirmar(
+  parcial.llenos === 2 && parcial.total === CAMPOS_FICHA.length
+    && avanceFicha(null).llenos === 0
+    && avanceFicha(llena).llenos === CAMPOS_FICHA.length
+    && avanceFicha(parcial, GRUPOS_FICHA[0].campos).total === 2
+    && CAMPOS_FICHA.every((campo) => campo.ejemplo)
+    && textoAvance(2, 13) === "2 de 13 datos completos",
+  "la ficha técnica cuenta sus datos completos y trae ejemplos"
+);
+afirmar(
+  textoCostosModelo([]) === "Sin costos registrados"
+    && textoCostosModelo([{ costo: 10, moneda: "USD" }])
+      === "1 costo · USD 10,00 por equipo"
+    && textoCostosModelo([
+      { costo: 10, moneda: "USD" },
+      { costo: 9, moneda: "USD" }
+    ]).startsWith("2 costos · el más reciente, USD 10,00"),
+  "la ficha resume los costos de su modelo"
 );
 
 if (fallos > 0) {

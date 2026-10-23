@@ -2,8 +2,10 @@
  * Propósito: Textos de Especificaciones técnicas.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-02
- * Dependencias: ninguna
+ * Dependencias: hw-catalogo
  */
+
+import { formatoMonto } from "./hw-catalogo.js";
 
 export const ET = {
   tituloListado: "Especificaciones técnicas | DTS",
@@ -52,7 +54,14 @@ export const ET = {
   tituloPdf: "Especificaciones técnicas",
   usoInterno: "Uso interno",
   generado: "Documento generado el",
-  ficha: "Ficha técnica"
+  ficha: "Ficha técnica",
+  fichaCompleta: "Ficha completa",
+  fichaPendiente: "Ficha con datos pendientes",
+  editarFicha: "Editar ficha",
+  cargandoCostos: "Buscando…",
+  costosNoDisponibles: "No se pudieron cargar los costos.",
+  sinCostos: "Sin costos registrados",
+  abrirCosto: "Abrir"
 };
 
 /**
@@ -60,6 +69,25 @@ export const ET = {
  * @param {number} total
  * @returns {string}
  */
+export function textoAvance(llenos, total) {
+  return `${llenos} de ${total} datos completos`;
+}
+
+/**
+ * El costo más reciente y cuántos hay.
+ * @param {{costo: number, moneda: string}[]} costos ya ordenados,
+ *   el más reciente primero
+ * @returns {string}
+ */
+export function textoCostosModelo(costos) {
+  if (!costos.length) return ET.sinCostos;
+  const [ultimo] = costos;
+  const monto = formatoMonto(ultimo.costo, ultimo.moneda);
+  if (costos.length === 1) return `1 costo · ${monto} por equipo`;
+  return `${costos.length} costos · el más reciente, ${monto} `
+    + "por equipo";
+}
+
 /** Filas del recuadro al pasar el mouse, en el orden de la planilla. */
 export const FILAS_VISTA = [
   { id: "nombre", etiqueta: "Modelo", siempre: true },

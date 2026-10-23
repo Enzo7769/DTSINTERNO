@@ -26,6 +26,7 @@ import { CATEGORIAS_COSTO, decimalesDe } from "./hw-catalogo.js";
 import { registrarError } from "./logger.js";
 import { avisar, porId } from "./ui.js";
 
+const SELECTOR_FILA = "tr.costeo-fila";
 const COLUMNAS = [
   "incluir", "concepto", "cantidadEquipo", "monedaLinea", "valor",
   "fabricante", "link", "subtotalCosto", ""
@@ -152,10 +153,27 @@ export async function pintarHoja(lineas) {
         filas,
         manuales.filter((linea) => linea.categoria === categoria.id)
       )));
+  if ((lineas || []).length) mostrarSoloIncluidas();
   const conDatos = paneles.find(({ filas, categoria }) =>
     filas.some((fila) => fila.linea)
     || manuales.some((linea) => linea.categoria === categoria.id));
   activar(conDatos ? conDatos.categoria.id : CATEGORIAS_COSTO[0].id);
+}
+
+/**
+ * Al abrir un costo con piezas, cada pestaña con algo incluido parte
+ * mostrando solo eso; la lista completa vuelve al desmarcar el filtro.
+ * @returns {void}
+ */
+function mostrarSoloIncluidas() {
+  porId("costo-lineas").querySelectorAll("[role=tabpanel]")
+    .forEach((caja) => {
+      const solo = caja.querySelector("[data-solo]");
+      const algo = [...caja.querySelectorAll(SELECTOR_FILA)].some(incluida);
+      if (!solo || !algo) return;
+      solo.checked = true;
+      filtrar(caja);
+    });
 }
 
 /**
@@ -196,8 +214,8 @@ function panel(categoria, filas, manuales) {
   caja.hidden = true;
   const tabla = document.createElement("table");
   tabla.className = "tabla-lineas costeo-tabla";
-  tabla.append(cabeza(), cuerpoCatalogo(categoria.id, filas),
-    cuerpoManual(categoria.id, manuales));
+  tabla.append(cabeza(), cuerpoManual(categoria.id, manuales),
+    cuerpoCatalogo(categoria.id, filas));
   const envoltura = document.createElement("div");
   envoltura.className = "tabla-wrap";
   envoltura.append(tabla);

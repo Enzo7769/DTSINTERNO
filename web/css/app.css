@@ -134,6 +134,25 @@ select.invalido {
 
 .boton:hover { background: #0a5d80; }
 
+a.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 10px;
+  padding: 7px 12px;
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  background: var(--blanco);
+  color: var(--azul-profundo);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .boton:focus-visible {
   outline: 2px solid var(--azul-profundo);
   outline-offset: 2px;
@@ -1491,7 +1510,7 @@ td.numero {
   color: var(--azul-profundo);
 }
 
-.costeo-parametros { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.costeo-parametros { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
 .costeo-cierre {
   display: grid;
@@ -1513,6 +1532,18 @@ table.tabla-resumen.tabla-historial td {
 }
 
 table.tabla-resumen.tabla-historial .derecha { text-align: right; }
+
+table.tabla-resumen.tabla-costos-modelo th,
+table.tabla-resumen.tabla-costos-modelo td {
+  text-align: left;
+  vertical-align: middle;
+}
+
+table.tabla-resumen.tabla-costos-modelo .derecha { text-align: right; }
+
+table.tabla-resumen.tabla-costos-modelo td:last-child {
+  text-align: right;
+}
 
 .tabla-historial tbody tr:first-child td {
   font-weight: 700;
@@ -1926,6 +1957,92 @@ input[readonly] { background: var(--papel); color: var(--tinta-suave); }
 }
 
 .ficha-grupo .campo > span { color: var(--tinta-suave); }
+
+.ficha-grupo legend small {
+  float: right;
+  font-weight: 600;
+  color: var(--tinta-suave);
+}
+
+.ficha-grupo legend small.listo { color: var(--ok); }
+
+.espec-ayuda { margin: 2px 0 10px; }
+
+.espec-resumen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: 18px;
+  align-items: center;
+}
+
+.espec-avance-caja { display: grid; gap: 8px; }
+
+.espec-avance-texto { display: grid; gap: 2px; }
+
+.espec-avance-texto strong { color: var(--azul-profundo); font-size: 16px; }
+
+.avance-barra {
+  height: 8px;
+  overflow: hidden;
+  background: var(--papel);
+  border: 1px solid var(--linea);
+  border-radius: 999px;
+}
+
+.avance-barra span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--aviso);
+  border-radius: inherit;
+  transition: width 0.2s ease;
+}
+
+.avance-barra.completa span { background: var(--ok); }
+
+.espec-datos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.espec-datos dt { font-size: 12px; color: var(--tinta-suave); }
+
+.espec-datos dd {
+  margin: 2px 0 0;
+  white-space: pre-line;
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+.ref-avance {
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+.ref-avance .avance-barra { height: 6px; }
+
+.ref-avance.completa { color: var(--ok); }
+
+.modelo-ayuda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.enlace {
+  color: var(--azul);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .espec-resumen, .espec-datos { grid-template-columns: 1fr; }
+}
 
 .modelo-acciones .boton { padding: 7px 10px; font-size: 13px; }
 

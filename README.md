@@ -117,13 +117,28 @@ imprimen los elementos marcados.
   descripción]` por categoría) y se carga al abrir un costo. Los
   registros antiguos se recuperan: lo que coincide con la lista se
   marca en su fila; el resto aparece como manual en su pestaña.
+  Lo agregado a mano va arriba de la lista y, al abrir un costo
+  guardado, cada pestaña con piezas parte en «Solo seleccionados».
+- **Día de la cotización**: campo propio junto al dólar y la UF.
+  Bajo él se indica si los valores son de ese día, de referencia
+  (no hubo cotización) o escritos a mano.
 - **Modelos** (`#/modelos`, `#/modelo`): catálogo en `modelosHw`.
   Tipo, nombre, otro nombre, estado, clientes e imagen (JPEG bajo
   150 KB).
 - **Especificaciones técnicas** (`#/especificaciones`,
   `#/especificacion`): la ficha técnica del mismo modelo
   (computador, pantalla, conectividad, energía). No se crea sola:
-  primero existe el modelo.
+  primero existe el modelo. Cada tarjeta y la ficha abierta muestran
+  cuántos de los 13 datos están completos (`avanceFicha` en
+  `web/js/hw-catalogo.js`) y el listado filtra las fichas con datos
+  pendientes. La ficha abierta enlaza a su modelo, lista los costos
+  con el mismo nombre de modelo y ofrece «Nuevo costo de este
+  modelo» (`#/costo?modelo=<id>`), que parte con el nombre y el tipo.
+  El costo, a su vez, enlaza a la ficha técnica si el modelo está en
+  el catálogo.
+- **Cambios sin guardar**: costo, modelo y ficha técnica avisan
+  antes de salir con cambios pendientes
+  (`web/js/cambios-pendientes.js`).
 
 Costo y modelo se relacionan por el nombre del modelo, sin
 distinguir mayúsculas, tildes ni espacios. Con la colección vacía

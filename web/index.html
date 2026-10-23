@@ -606,8 +606,8 @@
             <p class="kicker">Costos hardware</p>
             <h1>Base de costos HW</h1>
             <p class="ayuda">
-              Costo actualizado por modelo, línea de producto y
-              cliente o configuración.
+              Lo que cuesta fabricar cada modelo, por línea de
+              producto. Abre un costo para ver su hoja de costeo.
             </p>
           </div>
           <div class="grupo-botones">
@@ -727,7 +727,12 @@
                 list="k-modelos-lista"
               >
               <datalist id="k-modelos-lista"></datalist>
-              <small id="k-modelo-ayuda" class="ayuda"></small>
+              <small class="ayuda modelo-ayuda">
+                <span id="k-modelo-ayuda"></span>
+                <a id="k-modelo-ficha" class="enlace" hidden>
+                  Ver ficha técnica
+                </a>
+              </small>
             </label>
             <div class="campo" data-campo="k-cliente-cotizacion">
               <label for="k-cliente-cotizacion">
@@ -832,13 +837,13 @@
                 autocomplete="off"
               >
             </label>
+            <label class="campo">
+              <span>Día de la cotización</span>
+              <input id="k-cambio-fecha" type="date">
+              <small id="k-cambio-ayuda" class="ayuda"></small>
+            </label>
             <label class="campo" data-campo="k-cambio-usd">
               <span>Dólar (CLP por 1 USD)</span>
-              <input
-                id="k-cambio-fecha"
-                type="date"
-                aria-label="Día de la cotización del dólar"
-              >
               <input
                 id="k-cambio-usd"
                 inputmode="decimal"
@@ -1009,13 +1014,22 @@
             <h1 id="modelo-titulo">Nuevo modelo</h1>
             <p id="modelo-meta" class="ayuda"></p>
           </div>
-          <button
-            id="btn-modelo-volver"
-            class="boton boton-secundario"
-            type="button"
-          >
-            Volver a modelos
-          </button>
+          <div class="grupo-botones">
+            <a
+              id="btn-modelo-ficha"
+              class="boton boton-secundario"
+              hidden
+            >
+              Editar ficha técnica
+            </a>
+            <button
+              id="btn-modelo-volver"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Volver a modelos
+            </button>
+          </div>
         </header>
         <div
           id="modelo-mensaje"
@@ -1107,7 +1121,8 @@
             <p class="kicker">Fichas de equipo</p>
             <h1>Especificaciones técnicas</h1>
             <p class="ayuda">
-              Ficha técnica y clientes de cada equipo.
+              Ficha técnica de cada modelo del catálogo. Pasa el mouse
+              por la foto para ver sus datos.
             </p>
           </div>
           <button id="btn-espec-todo" class="boton" type="button">
@@ -1122,7 +1137,15 @@
             </select>
           </label>
           <label class="campo">
-            <span>Buscar modelo</span>
+            <span>Ficha</span>
+            <select id="ef-avance">
+              <option value="">Todas</option>
+              <option value="incompleta">Con datos pendientes</option>
+              <option value="completa">Completas</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Buscar modelo o cliente</span>
             <input id="ef-texto" type="search" maxlength="120">
           </label>
           <button
@@ -1152,14 +1175,43 @@
             <h1 id="espec-titulo">Especificaciones técnicas</h1>
             <p id="espec-meta" class="ayuda"></p>
           </div>
-          <button
-            id="btn-espec-volver"
-            class="boton boton-secundario"
-            type="button"
-          >
-            Volver a especificaciones
-          </button>
+          <div class="grupo-botones">
+            <a id="btn-espec-modelo" class="boton boton-secundario">
+              Editar datos del modelo
+            </a>
+            <button
+              id="btn-espec-volver"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Volver a especificaciones
+            </button>
+          </div>
         </header>
+        <section class="tarjeta espec-resumen">
+          <div class="espec-avance-caja">
+            <div class="espec-avance-texto">
+              <strong id="espec-avance-titulo"></strong>
+              <span id="espec-avance-detalle" class="ayuda"></span>
+            </div>
+            <div
+              id="espec-avance-barra"
+              class="avance-barra"
+              role="progressbar"
+              aria-valuemin="0"
+            ><span></span></div>
+          </div>
+          <dl class="espec-datos">
+            <div>
+              <dt>Clientes que tienen el equipo</dt>
+              <dd id="espec-clientes"></dd>
+            </div>
+            <div>
+              <dt>Costos registrados</dt>
+              <dd id="espec-costos"></dd>
+            </div>
+          </dl>
+        </section>
         <section class="tarjeta">
           <h2>Imagen referencial</h2>
           <div class="imagen-modelo">
@@ -1185,7 +1237,46 @@
         </section>
         <section class="tarjeta">
           <h2>Ficha técnica</h2>
+          <p class="ayuda espec-ayuda">
+            Escribe un dato por línea. Los campos vacíos no aparecen
+            en el PDF.
+          </p>
           <div id="e-ficha" class="ficha-grupos"></div>
+        </section>
+        <section class="tarjeta">
+          <div class="cabeza-seccion">
+            <div>
+              <h2>Costos de este modelo</h2>
+              <p class="ayuda">
+                Cotizaciones de la Base de costos HW con este mismo
+                nombre de modelo.
+              </p>
+            </div>
+            <a id="btn-espec-costo-nuevo" class="boton boton-secundario">
+              Nuevo costo de este modelo
+            </a>
+          </div>
+          <p id="espec-costos-vacio" class="ayuda" hidden>
+            Todavía no hay costos para este modelo.
+          </p>
+          <div class="tabla-wrap">
+            <table
+              id="espec-costos-tabla"
+              class="tabla-resumen tabla-costos-modelo"
+              hidden
+            >
+              <thead>
+                <tr>
+                  <th>N°</th>
+                  <th>Línea</th>
+                  <th class="derecha">Costo por equipo</th>
+                  <th>Actualizado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="espec-costos-cuerpo"></tbody>
+            </table>
+          </div>
         </section>
         <div class="barra-acciones">
           <button id="btn-espec-guardar" class="boton" type="button">

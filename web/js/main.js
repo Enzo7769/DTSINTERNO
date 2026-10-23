@@ -2,7 +2,7 @@
  * Propósito: Arranque, sesión y navegación del panel.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-01
- * Dependencias: cartilla-form, cartilla-listado,
+ * Dependencias: cambios-pendientes, cartilla-form, cartilla-listado,
  *   cartilla-repositorio, costo-form, costo-listado,
  *   costo-repositorio, espec-form, espec-listado,
  *   modelo-form, modelo-listado, modelo-repositorio,
@@ -10,6 +10,7 @@
  *   firebase, formulario, listado, logger, repositorio, sanitizar, ui
  */
 
+import { permitirCambioRuta } from "./cambios-pendientes.js";
 import {
   definirAutorCartilla,
   iniciarCartilla,
@@ -272,6 +273,7 @@ function asegurarUi() {
   enlazarSalir(porId("btn-salir"));
   iniciarMenu();
   window.addEventListener("hashchange", () => {
+    if (!permitirCambioRuta()) return;
     alCambiarRuta().catch((error) => {
       registrarError(error, "ruta");
       avisar(MSG.fallaInicio, "error");
@@ -333,7 +335,7 @@ async function enrutar() {
     const copia = ruta.params.get("copia") || "";
     if (id) await mostrarCostoEdicion(id);
     else if (copia) await mostrarCostoCopia(copia);
-    else await mostrarCostoNuevo();
+    else await mostrarCostoNuevo(ruta.params.get("modelo") || "");
     return;
   }
   if (ruta.path === "/modelos") {
