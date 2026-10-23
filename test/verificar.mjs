@@ -5,6 +5,8 @@
  * Dependencias: web/js/validacion.js, filtros.js, fechas.js, demo.js
  */
 
+import { readFileSync } from "node:fs";
+import { createContext, runInContext } from "node:vm";
 import {
   normalizarCartilla,
   validarCartilla
@@ -1282,6 +1284,29 @@ afirmar(
     && retiros.hoy.length === 1 && retiros.hoy[0].local.codigo === "LID23"
     && retiros.proximos.length === 1 && retiros.proximos[0].dias === 3,
   "los retiros se separan en atrasados, hoy y próximos 3 días"
+);
+// El recordatorio por correo (Apps Script) usa la misma lógica.
+const scriptRetiros = createContext({});
+runInContext(readFileSync(new URL(
+  "../apps-script/recordatorio-retiros/Codigo.gs", import.meta.url), "utf8"),
+scriptRetiros);
+const delScript = scriptRetiros.retirosPorFecha([
+  conRetiro("LID20", "2026-10-18", "pendiente"),
+  conRetiro("LID21", "2026-10-20", "pendiente"),
+  conRetiro("LID22", "2026-10-18", "transito"),
+  conRetiro("LID23", "2026-10-23", "pendiente"),
+  conRetiro("LID24", "2026-10-26", "pendiente"),
+  conRetiro("LID25", "2026-10-27", "pendiente")
+], "2026-10-23", 3);
+const correoRetiros = scriptRetiros.armarCorreo(delScript, "2026-10-23",
+  { diasAviso: 3, enlace: "" });
+afirmar(
+  ["atrasados", "hoy", "proximos"].every((g) => delScript[g]
+    .map((f) => `${f.local.codigo}:${f.dias}`).join()
+    === retiros[g].map((f) => `${f.local.codigo}:${f.dias}`).join())
+    && correoRetiros.asunto
+      === "Retiros de equipos: 2 atrasados, 1 hoy, 1 próximo",
+  "el correo de recordatorio calcula los retiros igual que la página"
 );
 
 if (fallos > 0) {
