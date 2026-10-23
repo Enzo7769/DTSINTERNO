@@ -125,7 +125,7 @@ import {
 import { registrarError } from "./logger.js";
 import { activarMemoria, leerPerfil } from "./repositorio.js";
 import { correo, correoValido } from "./sanitizar.js";
-import { avisar, mostrar, porId } from "./ui.js";
+import { avisar, cerrarModales, mostrar, porId } from "./ui.js";
 
 const CLAVE_INTENTOS = "dts_login_intentos";
 const CLAVE_MENU = "dts_menu_cerrado";
@@ -292,6 +292,7 @@ function asegurarUi() {
   iniciarMenu();
   window.addEventListener("hashchange", () => {
     if (!permitirCambioRuta()) return;
+    cerrarModales();
     alCambiarRuta().catch((error) => {
       registrarError(error, "ruta");
       avisar(MSG.fallaInicio, "error");

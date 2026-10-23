@@ -87,9 +87,9 @@ const TXT = {
   revisar: "Revisión de componentes",
   pendientes: "Faltan por revisar",
   sinRevisar: "Sin revisar",
-  importados: "Se importaron {n}. Ya aparecen en el panel.",
-  importarRepetidos:
-    "{n} ya existen en el contrato y se omitirán.",
+  importados: "{n}. Ya aparecen en el panel.",
+  importarRepetido: "{n} ya existe en el contrato y se omitirá.",
+  importarRepetidos: "{n} ya existen en el contrato y se omitirán.",
   csv: "Recepcion_equipos.csv",
   kpiLocales: "Locales",
   kpiRecibidos: "Equipos recibidos",
@@ -113,6 +113,8 @@ let contrato = "";
 let actual = null;
 let equipos = [];
 let pendientesImportar = [];
+let contratoImportar = "";
+let equipoAuto = "";
 let listo = false;
 
 /**
@@ -137,7 +139,8 @@ export function iniciarRecepcion() {
     contrato = porId("rc-contrato").value;
     pintarPanel();
   });
-  ["rcf-region", "rcf-etapa", "rcf-resultado"].forEach((id) => {
+  porId("rcf-region").addEventListener("change", pintarPanel);
+  ["rcf-etapa", "rcf-resultado"].forEach((id) => {
     porId(id).addEventListener("change", pintarTablaLocales);
   });
   porId("rcf-texto").addEventListener("input", pintarTablaLocales);
@@ -147,7 +150,7 @@ export function iniciarRecepcion() {
   porId("btn-rcf-limpiar").addEventListener("click", () => {
     ["rcf-region", "rcf-etapa", "rcf-resultado", "rcf-texto"]
       .forEach((id) => { porId(id).value = ""; });
-    pintarTablaLocales();
+    pintarPanel();
   });
   porId("btn-rc-nuevo").addEventListener("click", () => {
     location.hash = "#/recepcion-local";
@@ -228,9 +231,16 @@ function pintarPanel() {
   estado.textContent = TXT.vacio;
   porId("rc-contenido").hidden = lista.length === 0;
   if (!lista.length) return;
-  pintarKpis(avance(lista));
-  pintarRegiones(lista);
-  pintarNovedades(novedades(lista, ITEMS_RECEPCION));
+  // Las cifras y novedades siguen al filtro de región; el gráfico por
+  // región siempre muestra todas para comparar.
+  const region = porId("rcf-region").value;
+  const deRegion = lista.filter((l) => !region || l.region === region);
+  porId("rc-alcance").textContent = region
+    ? `Cifras de ${etiquetaDeLista(REGIONES, region)}`
+    : "";
+  pintarKpis(avance(deRegion));
+  pintarRegiones(lista, region);
+  pintarNovedades(novedades(deRegion, ITEMS_RECEPCION));
   pintarTablaLocales();
 }
 
@@ -290,9 +300,10 @@ function kpi(titulo, valor, detalle, pct) {
  * Barra apilada por región: revisados, recibidos, en tránsito y
  * pendientes, con los números escritos.
  * @param {object[]} lista
+ * @param {string} elegida región del filtro, o vacío
  * @returns {void}
  */
-function pintarRegiones(lista) {
+function pintarRegiones(lista, elegida) {
   porId("rc-leyenda").replaceChildren(...ETAPAS.map((etapa) => {
     const li = document.createElement("li");
     const i = document.createElement("i");
@@ -310,11 +321,15 @@ function pintarRegiones(lista) {
       }));
       const caja = document.createElement("button");
       caja.type = "button";
-      caja.className = "rc-region";
+      caja.className = `rc-region${fila.region === elegida
+        ? " elegida" : ""}`;
       caja.title = "Filtrar por esta región";
+      caja.setAttribute("aria-pressed", String(fila.region === elegida));
       caja.addEventListener("click", () => {
-        porId("rcf-region").value = fila.region;
-        pintarTablaLocales();
+        porId("rcf-region").value = fila.region === elegida
+          ? ""
+          : fila.region;
+        pintarPanel();
         porId("form-filtros-rc").scrollIntoView({ behavior: "smooth" });
       });
       const nombre = document.createElement("span");
@@ -387,7 +402,7 @@ function filtrados() {
   const q = claveCodigo(porId("rcf-texto").value).toLowerCase();
   return delContrato()
     .filter((l) => !region || l.region === region)
-    .filter((l) => !etapa || l.equipos.some((e) => e.etapa === etapa))
+    .filter((l) => !etapa || etapaLocal(l) === etapa)
     .filter((l) => !resultado
       || l.equipos.some((e) => resultadoEquipo(e) === resultado))
     .filter((l) => !q || [l.codigo, l.nombre, l.comuna,
@@ -417,37 +432,39 @@ function pintarTablaLocales() {
   }
   cuerpo.replaceChildren(...lista.map((local) => {
     const tr = document.createElement("tr");
+    const destino = `#/recepcion-local?id=${encodeURIComponent(local.id)}`;
+    tr.className = "rc-fila";
+    // Toda la fila abre el local (en el celular es una tarjeta).
+    tr.addEventListener("click", (e) => {
+      if (!e.target.closest("a")) location.hash = destino;
+    });
     const etapa = etapaLocal(local);
-    [
-      [local.codigo, "numero nowrap"],
-      [local.nombre || "—", "fuerte texto"],
-      [local.comuna || "—", ""],
-      [etiquetaDeLista(REGIONES, local.region) || "—", ""],
-      [String(local.equipos.length), "derecha"]
-    ].forEach(([texto, clase]) => {
+    const celda = (etiqueta, clase) => {
       const td = document.createElement("td");
-      td.textContent = texto;
+      td.dataset.label = etiqueta;
       if (clase) td.className = clase;
       tr.append(td);
+      return td;
+    };
+    [
+      ["Código", local.codigo, "numero nowrap"],
+      ["Local", local.nombre || "—", "fuerte texto"],
+      ["Comuna", local.comuna || "—", ""],
+      ["Región", etiquetaDeLista(REGIONES, local.region) || "—", ""],
+      ["Equipos", String(local.equipos.length), "derecha"]
+    ].forEach(([etiqueta, texto, clase]) => {
+      celda(etiqueta, clase).textContent = texto;
     });
-    const tdEtapa = document.createElement("td");
-    tdEtapa.append(pillEtapa(etapa));
-    const tdRev = document.createElement("td");
-    tdRev.className = "nowrap";
-    tdRev.append(resumenRevision(local));
-    const tdRetiro = document.createElement("td");
-    tdRetiro.className = "nowrap";
-    tdRetiro.textContent = local.retiroProgramado
+    celda("Etapa", "").append(pillEtapa(etapa));
+    celda("Revisión", "nowrap").append(resumenRevision(local));
+    celda("Retiro", "nowrap").textContent = local.retiroProgramado
       ? formatearFecha(local.retiroProgramado)
       : "—";
-    const tdAcc = document.createElement("td");
-    tdAcc.className = "acciones";
     const a = document.createElement("a");
     a.className = "boton boton-secundario";
-    a.href = `#/recepcion-local?id=${encodeURIComponent(local.id)}`;
+    a.href = destino;
     a.textContent = TXT.abrir;
-    tdAcc.append(a);
-    tr.append(tdEtapa, tdRev, tdRetiro, tdAcc);
+    celda("", "acciones").append(a);
     return tr;
   }));
 }
@@ -580,20 +597,35 @@ function iniciarImportar() {
     pendientesImportar = [];
     dialogo.showModal();
   });
+  // Si cambia el texto o el contrato hay que volver a revisar.
+  ["rc-imp-texto", "rc-imp-contrato"].forEach((id) => {
+    porId(id).addEventListener("input", () => {
+      porId("btn-rc-imp-ok").disabled = true;
+    });
+  });
   porId("btn-rc-imp-cancelar").addEventListener("click", () => {
     dialogo.close();
   });
   porId("btn-rc-imp-revisar").addEventListener("click", revisarImportar);
-  porId("rc-imp-texto").addEventListener("input", () => {
-    porId("btn-rc-imp-ok").disabled = true;
-  });
   porId("btn-rc-imp-ok").addEventListener("click", () => {
     importar().catch((error) => fallo(error, "recepcion.importar"));
   });
 }
 
 /**
- * Muestra qué se va a crear antes de guardar.
+ * @param {string[]} codigos
+ * @param {number} max
+ * @returns {string} «LID01, LID02 y 3 más»
+ */
+function listaCorta(codigos, max) {
+  const vistos = codigos.slice(0, max).join(", ");
+  const resto = codigos.length - max;
+  return resto > 0 ? `${vistos} y ${resto} más` : vistos;
+}
+
+/**
+ * Muestra qué se va a crear antes de guardar. Los locales sin región
+ * reconocida no se importan (la región es obligatoria).
  * @returns {void}
  */
 function revisarImportar() {
@@ -609,20 +641,27 @@ function revisarImportar() {
     .filter((l) => claveCodigo(l.contrato) === claveCodigo(nombre))
     .map((l) => l.codigoClave));
   const repetidos = nuevos.filter((l) => existentes.has(l.codigoClave));
-  pendientesImportar = nuevos.filter((l) => !existentes.has(l.codigoClave));
-  const sinRegion = pendientesImportar.filter((l) => !l.region).length;
+  const libres = nuevos.filter((l) => !existentes.has(l.codigoClave));
+  const sinRegion = libres.filter((l) => !l.region);
+  pendientesImportar = libres.filter((l) => l.region);
+  contratoImportar = nombre;
   const partes = [];
+  const n = pendientesImportar.length;
   const equiposN = pendientesImportar
     .reduce((acc, l) => acc + l.equipos.length, 0);
-  partes.push(`Se crearán ${textoConteo(pendientesImportar.length,
-    "local", "locales")} con ${textoConteo(equiposN, "equipo")}.`);
+  partes.push(n
+    ? `${n === 1 ? "Se creará" : "Se crearán"} ${textoConteo(n, "local",
+      "locales")} con ${textoConteo(equiposN, "equipo")}.`
+    : "No hay locales nuevos para crear.");
   if (repetidos.length) {
-    partes.push(TXT.importarRepetidos.replace("{n}",
+    partes.push((repetidos.length === 1 ? TXT.importarRepetido
+      : TXT.importarRepetidos).replace("{n}",
       textoConteo(repetidos.length, "código", "códigos")));
   }
-  if (sinRegion) {
-    partes.push(`${sinRegion} sin región: complétala después en cada `
-      + "local.");
+  if (sinRegion.length) {
+    partes.push(`No se importarán por no tener región reconocida: `
+      + `${listaCorta(sinRegion.map((l) => l.codigo), 6)}. Corrige la `
+      + "columna Región y vuelve a revisar.");
   }
   const ul = document.createElement("ul");
   [...partes, ...avisos.slice(0, 8)].forEach((texto) => {
@@ -630,37 +669,42 @@ function revisarImportar() {
     li.textContent = texto;
     ul.append(li);
   });
+  if (avisos.length > 8) {
+    const li = document.createElement("li");
+    li.textContent = `y ${avisos.length - 8} avisos más.`;
+    ul.append(li);
+  }
   const muestra = document.createElement("p");
-  muestra.className = "ayuda";
+  muestra.className = "ayuda rc-imp-muestra";
   muestra.textContent = pendientesImportar.slice(0, 6)
     .map((l) => `${l.codigo} · ${l.nombre || "sin nombre"} · `
-      + `${etiquetaDeLista(REGIONES, l.region) || "sin región"} · `
+      + `${etiquetaDeLista(REGIONES, l.region)} · `
       + `${textoConteo(l.equipos.length, "equipo")}`)
+    .concat(n > 6 ? [`y ${n - 6} más`] : [])
     .join("\n");
   vista.replaceChildren(ul, muestra);
-  porId("btn-rc-imp-ok").disabled = pendientesImportar.length === 0;
+  const ok = porId("btn-rc-imp-ok");
+  ok.disabled = n === 0;
+  ok.scrollIntoView({ block: "nearest" });
 }
 
 /**
- * Guarda los locales revisados. Los que vienen sin región no se
- * importan (la región es obligatoria) y se avisa cuántos quedaron.
+ * Guarda los locales revisados, en el contrato con que se revisaron.
  * @returns {Promise<void>}
  */
 async function importar() {
-  const validos = pendientesImportar.filter((l) => l.region);
   const boton = porId("btn-rc-imp-ok");
   boton.disabled = true;
   let n = 0;
-  for (const local of validos) {
+  for (const local of pendientesImportar) {
     await guardarLocal(local, null, autor);
     n += 1;
   }
   porId("rc-importar").close();
-  const omitidos = pendientesImportar.length - validos.length;
-  avisar(TXT.importados.replace("{n}", textoConteo(n, "local", "locales"))
-    + (omitidos ? ` ${omitidos} sin región no se importaron.` : ""),
-  omitidos ? "aviso" : "ok");
-  contrato = porId("rc-imp-contrato").value.trim();
+  avisar(TXT.importados.replace("{n}", `${n === 1 ? "Se importó" :
+    "Se importaron"} ${textoConteo(n, "local", "locales")}`), "ok");
+  contrato = contratoImportar;
+  pendientesImportar = [];
   await mostrarRecepcion();
 }
 
@@ -744,9 +788,11 @@ export async function mostrarLocalRecepcion(id, enfocar) {
   pintarComunas();
   porId("btn-rl-eliminar").hidden = !actual;
   equipos = structuredClone(datos.equipos || []);
+  equipoAuto = "";
   if (!actual) {
+    equipoAuto = nuevoUid();
     equipos.push({
-      uid: nuevoUid(), tipo: "totem", modelo: "", serie: "",
+      uid: equipoAuto, tipo: "totem", modelo: "", serie: "",
       etapa: "pendiente", checklist: {}
     });
   }
@@ -1128,17 +1174,24 @@ function botonAccion(texto, accion, clase) {
  */
 async function guardar() {
   leerEquipos();
-  const crudo = { equipos };
+  // El equipo en blanco que se ofrece en un local nuevo no se guarda
+  // si nadie lo tocó.
+  const intacto = (eq) => eq.uid === equipoAuto && !eq.modelo && !eq.serie
+    && eq.etapa === "pendiente" && !eq.observaciones
+    && !Object.keys(eq.checklist || {}).length;
+  const crudo = { equipos: equipos.filter((eq) => !intacto(eq)) };
   Object.entries(CAMPOS).forEach(([clave, campoId]) => {
     crudo[clave] = porId(campoId).value;
   });
   const limpio = normalizarLocal(crudo);
-  const revisionDatos = validarLocal(limpio, locales, actual && actual.id);
+  const revisionDatos = validarLocal(limpio, locales, actual && actual.id,
+    hoyIso());
   pintarErrores(revisionDatos);
   if (!revisionDatos.valido) return;
   const nuevo = !actual;
   const fresco = await guardarLocal(limpio, actual, autor);
   actual = fresco;
+  equipoAuto = "";
   locales = await listarLocales();
   contrato = fresco.contrato;
   cambiosGuardados("vista-recepcion-local");
@@ -1216,7 +1269,11 @@ function pintarErrores(rev) {
     ul.append(li);
   });
   caja.replaceChildren(ul);
-  caja.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  // Lleva al primer punto con error; el resumen queda arriba.
+  const primero = porId("vista-recepcion-local").querySelector(".invalido");
+  (primero || caja).scrollIntoView({ behavior: "smooth", block: "start" });
+  avisar(`Revisa ${textoConteo(rev.errores.length, "punto", "puntos")} `
+    + "marcados en rojo.", "error");
 }
 
 /**

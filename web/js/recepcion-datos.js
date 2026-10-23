@@ -151,9 +151,10 @@ export function normalizarLocal(crudo) {
  * @param {object} local normalizado
  * @param {object[]} [otros] locales guardados, para códigos repetidos
  * @param {string} [idActual]
+ * @param {string} [hoy] AAAA-MM-DD; la recepción no puede ser futura
  * @returns {{valido: boolean, errores: string[], campos: object}}
  */
-export function validarLocal(local, otros, idActual) {
+export function validarLocal(local, otros, idActual, hoy) {
   const errores = [];
   const campos = {};
   const fallar = (campo, mensaje) => {
@@ -175,9 +176,15 @@ export function validarLocal(local, otros, idActual) {
     if (llego && !equipo.fechaRecepcion) {
       fallar(`eq-${i}`, `${n}: indica la fecha de recepción.`);
     }
+    if (hoy && equipo.fechaRecepcion > hoy) {
+      fallar(`eq-${i}`, `${n}: la fecha de recepción no puede ser futura.`);
+    }
     if (equipo.etapa === "revisado") {
       const sinRevisar = pendientesRevision(equipo);
-      if (sinRevisar.length) {
+      if (sinRevisar.length > 3) {
+        fallar(`eq-${i}`, `${n}: faltan ${sinRevisar.length} componentes `
+          + "por revisar.");
+      } else if (sinRevisar.length) {
         fallar(`eq-${i}`, `${n}: faltan por revisar `
           + `${sinRevisar.map((item) => item.nombre).join(", ")}.`);
       }
@@ -202,7 +209,8 @@ export function pendientesRevision(equipo) {
 
 /**
  * Resultado de un equipo revisado: incompleto si falta algo, con
- * daños si algo está dañado o no enciende; si no, OK.
+ * daños si algo está dañado o no enciende; si no, OK. «No probado»
+ * (p. ej. porque el equipo no enciende) no cambia el resultado.
  * @param {object} equipo
  * @returns {"ok"|"danado"|"incompleto"|""} vacío si no está revisado
  */
@@ -283,8 +291,15 @@ export function avancePorRegion(locales) {
   }).filter((fila) => fila.locales > 0);
 }
 
+/** Novedad que no es un componente: el equipo no enciende. */
+export const NOVEDAD_NO_ENCIENDE = {
+  id: "_enciende",
+  nombre: "Equipo no enciende"
+};
+
 /**
- * Componentes que llegaron faltando o dañados, para reclamar.
+ * Componentes que llegaron faltando o dañados, para reclamar. Un
+ * equipo que no enciende cuenta como daño aparte.
  * @param {object[]} locales
  * @param {object[]} items catálogo de componentes
  * @returns {{id: string, nombre: string, falta: number,
@@ -292,21 +307,28 @@ export function avancePorRegion(locales) {
  */
 export function novedades(locales, items) {
   const mapa = new Map();
+  const sumar = (id, estado, codigo) => {
+    const previo = mapa.get(id) || { falta: 0, danado: 0, donde: [] };
+    previo[estado] += 1;
+    previo.donde.push(codigo);
+    mapa.set(id, previo);
+  };
   (locales || []).forEach((local) => {
     local.equipos.forEach((equipo) => {
+      if (equipo.enciende === "no") {
+        sumar(NOVEDAD_NO_ENCIENDE.id, "danado", local.codigo);
+      }
       Object.entries(equipo.checklist || {}).forEach(([id, fila]) => {
         if (fila.estado !== "falta" && fila.estado !== "danado") return;
-        const previo = mapa.get(id) || { falta: 0, danado: 0, donde: [] };
-        previo[fila.estado] += 1;
-        previo.donde.push(local.codigo);
-        mapa.set(id, previo);
+        sumar(id, fila.estado, local.codigo);
       });
     });
   });
+  const catalogo = [...items, NOVEDAD_NO_ENCIENDE];
   return [...mapa.entries()]
     .map(([id, dato]) => ({
       id,
-      nombre: (items.find((item) => item.id === id) || {}).nombre || id,
+      nombre: (catalogo.find((item) => item.id === id) || {}).nombre || id,
       ...dato,
       donde: [...new Set(dato.donde)]
     }))
@@ -317,7 +339,7 @@ export function novedades(locales, items) {
 
 const ENCABEZADOS = {
   codigo: ["codigo", "cod", "local", "idlocal", "codlocal", "tienda"],
-  nombre: ["nombre", "nombrelocal", "sucursal", "nombretienda"],
+  nombre: ["nombre", "nombrelocal", "sucursal", "nombretienda", "local"],
   region: ["region", "reg"],
   comuna: ["comuna", "ciudad"],
   direccion: ["direccion", "dir", "domicilio"],
@@ -339,28 +361,117 @@ function plano(valor) {
     .toLowerCase();
 }
 
+/** Palabras que no ayudan a reconocer una región. */
+const PALABRAS_VACIAS = new Set([
+  "region", "reg", "de", "del", "la", "el", "y", "general", "bernardo",
+  "carlos", "ibanez", "campo", "chilena", "antartica"
+]);
+
+/** Números romanos y arábigos de las regiones. */
+const NUMEROS_REGION = {
+  i: "TA", ii: "AN", iii: "AT", iv: "CO", v: "VA", vi: "LI", vii: "ML",
+  viii: "BI", ix: "AR", x: "LL", xi: "AI", xii: "MA", xiii: "RM",
+  xiv: "LR", xv: "AP", xvi: "NB", rm: "RM"
+};
+["TA", "AN", "AT", "CO", "VA", "LI", "ML", "BI", "AR", "LL", "AI", "MA",
+  "RM", "LR", "AP", "NB"].forEach((id, i) => {
+  NUMEROS_REGION[String(i + 1)] = id;
+});
+
+/** Otras formas de escribir una región (ya sin tildes ni espacios). */
+const ALIAS_REGION = {
+  AP: ["arica", "parinacota"],
+  TA: ["tarapaca", "iquique"],
+  RM: ["metropolitana", "santiago"],
+  LI: ["ohiggins", "higgins", "libertador", "rancagua"],
+  ML: ["maule", "talca"],
+  NB: ["nuble", "chillan"],
+  BI: ["biobio", "concepcion"],
+  AR: ["araucania", "temuco"],
+  LR: ["losrios", "rios", "valdivia"],
+  LL: ["loslagos", "lagos", "puertomontt"],
+  AI: ["aysen", "aisen", "coyhaique"],
+  MA: ["magallanes", "puntaarenas"]
+};
+
+/**
+ * @param {string} valor
+ * @returns {string[]} palabras sin tildes ni signos, en minúscula
+ */
+function palabras(valor) {
+  return String(valor || "")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^0-9a-z]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean);
+}
+
 /**
  * Región desde lo que venga escrito: «RM», «Metropolitana», «V»,
- * «Región de Valparaíso», «13»…
+ * «VI Región», «Región del Libertador General Bernardo O'Higgins»,
+ * «13»…
  * @param {string} valor
  * @returns {string} id de región o vacío
  */
 export function regionDesdeTexto(valor) {
-  const p = plano(valor).replace(/^region(de|del)?/, "");
-  if (!p) return "";
-  const porNumero = {
-    "1": "TA", "2": "AN", "3": "AT", "4": "CO", "5": "VA", "6": "LI",
-    "7": "ML", "8": "BI", "9": "AR", "10": "LL", "11": "AI", "12": "MA",
-    "13": "RM", "14": "LR", "15": "AP", "16": "NB"
-  };
-  if (porNumero[p]) return porNumero[p];
-  if (p === "santiago" || p === "metropolitana" || p === "rm") return "RM";
-  const exacta = REGIONES.find((r) => plano(r.numero) === p
-    || plano(r.id) === p || plano(r.etiqueta) === p);
+  const todas = palabras(valor);
+  const utiles = todas.filter((w) => !PALABRAS_VACIAS.has(w));
+  const p = utiles.join("");
+  if (!todas.length) return "";
+  if (NUMEROS_REGION[p]) return NUMEROS_REGION[p];
+  const numero = utiles.find((w) => NUMEROS_REGION[w] && w.length <= 4);
+  if (utiles.length === 1 && numero) return NUMEROS_REGION[numero];
+  const exacta = REGIONES.find((r) => plano(r.id) === p
+    || palabras(r.etiqueta).filter((w) => !PALABRAS_VACIAS.has(w))
+      .join("") === p);
   if (exacta) return exacta.id;
-  const parcial = REGIONES.find((r) => plano(r.etiqueta).includes(p)
-    || (p.length > 4 && p.includes(plano(r.etiqueta))));
-  return parcial ? parcial.id : "";
+  if (!p) return todas.includes("antartica") ? "MA" : "";
+  const porAlias = Object.entries(ALIAS_REGION)
+    .find(([, alias]) => alias.some((a) => p.includes(a)));
+  if (porAlias) return porAlias[0];
+  const parcial = REGIONES.find((r) => p.length > 3
+    && (plano(r.etiqueta).includes(p) || p.includes(plano(r.etiqueta))));
+  if (parcial) return parcial.id;
+  return numero ? NUMEROS_REGION[numero] : "";
+}
+
+/**
+ * Parte una fila de CSV respetando comillas: «"Av. Uno, 123"» es una
+ * sola celda y «""» dentro de comillas es una comilla.
+ * @param {string} linea
+ * @param {string} sep
+ * @returns {string[]}
+ */
+export function partirFila(linea, sep) {
+  const celdas = [];
+  let actual = "";
+  let entreComillas = false;
+  for (let i = 0; i < linea.length; i += 1) {
+    const c = linea[i];
+    if (entreComillas) {
+      if (c === "\"" && linea[i + 1] === "\"") {
+        actual += "\"";
+        i += 1;
+      } else if (c === "\"") {
+        entreComillas = false;
+      } else {
+        actual += c;
+      }
+    } else if (c === "\"" && !actual.trim()) {
+      entreComillas = true;
+      actual = "";
+    } else if (c === sep) {
+      celdas.push(actual.trim());
+      actual = "";
+    } else {
+      actual += c;
+    }
+  }
+  celdas.push(actual.trim());
+  return celdas;
 }
 
 /**
@@ -385,12 +496,21 @@ export function leerPlanillaLocales(textoPegado, contrato) {
   }
   const sep = filas[0].includes("\t")
     ? "\t"
-    : (filas[0].split(";").length > filas[0].split(",").length ? ";" : ",");
-  const cabeza = filas[0].split(sep).map(plano);
+    : (partirFila(filas[0], ";").length > partirFila(filas[0], ",").length
+      ? ";"
+      : ",");
+  const cabeza = partirFila(filas[0], sep).map(plano);
   const col = {};
+  // Cada columna se usa una vez: con «Código» y «Local», «Local» es
+  // el nombre; si solo viene «Local», es el código.
+  const usadas = new Set();
   Object.entries(ENCABEZADOS).forEach(([campo, nombres]) => {
-    const i = cabeza.findIndex((c) => nombres.includes(c));
-    if (i >= 0) col[campo] = i;
+    const i = cabeza.findIndex((c, n) => !usadas.has(n)
+      && nombres.includes(c));
+    if (i >= 0) {
+      col[campo] = i;
+      usadas.add(i);
+    }
   });
   if (col.codigo === undefined) {
     return {
@@ -400,7 +520,7 @@ export function leerPlanillaLocales(textoPegado, contrato) {
   }
   const porCodigo = new Map();
   filas.slice(1).forEach((linea, n) => {
-    const celdas = linea.split(sep).map((c) => c.trim());
+    const celdas = partirFila(linea, sep);
     const valor = (campo) => (col[campo] === undefined
       ? ""
       : celdas[col[campo]] || "");
@@ -427,22 +547,22 @@ export function leerPlanillaLocales(textoPegado, contrato) {
       });
     }
     const local = porCodigo.get(clave);
+    const textoCantidad = valor("equipos");
     const cantidad = Math.min(
-      Math.max(parseInt(valor("equipos"), 10) || 0, 0),
+      Math.max(parseInt(textoCantidad, 10) || 0, 0),
       LIMITES_RECEPCION.equipos
     );
     const tipo = TIPOS_RECEPCION.find((t) => plano(t.etiqueta)
       === plano(valor("tipo")))?.id || "totem";
-    if (valor("serie") || valor("modelo") || !cantidad) {
+    // Con serie la fila es un equipo; sin serie manda la cantidad
+    // (0 = ninguno) y, si no viene cantidad, se asume uno.
+    const veces = valor("serie") ? 1 : (textoCantidad ? cantidad : 1);
+    for (let i = 0; i < veces; i += 1) {
       local.equipos.push({
         tipo,
         modelo: valor("modelo"),
         serie: valor("serie")
       });
-    } else {
-      for (let i = 0; i < cantidad; i += 1) {
-        local.equipos.push({ tipo, modelo: valor("modelo"), serie: "" });
-      }
     }
   });
   const locales = [...porCodigo.values()].map(normalizarLocal);

@@ -4362,16 +4362,75 @@ tr.fila-anterior td.fuerte { font-weight: 600; }
   background: #5f6b74; border-color: #5f6b74; color: #ffffff;
 }
 
+.rl-op-noprobado input:checked + span {
+  background: #4d6472; border-color: #4d6472; color: #ffffff;
+}
+
+.rl-item.es-noprobado { background: #f4f6f8; }
+
+.rc-alcance:empty { display: none; }
+
+.rc-alcance { margin: 0 0 8px; font-weight: 700; color: var(--azul); }
+
+.rc-region.elegida { background: #e3effc; box-shadow: inset 3px 0 0 #184f95; }
+
+.rc-fila { cursor: pointer; }
+
+.rc-fila:hover td { background: #f7fbfd; }
+
+.rc-tabla-locales .acciones .boton { min-height: 40px; }
+
+/* Controles de la recepción cómodos con el dedo (≥ 40 px). */
+#vista-recepcion-local input,
+#vista-recepcion-local select,
+#vista-recepcion .filtros select,
+#vista-recepcion .filtros input,
+.rl-todo-ok,
+.rl-pie .boton,
+#btn-rl-agregar { min-height: 40px; }
+
 .rl-pie { display: flex; justify-content: flex-end; }
 
 @media (max-width: 720px) {
   .rc-barra, .rl-grid { grid-template-columns: 1fr; }
   .rl-pasos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rl-item { grid-template-columns: 1fr; }
-  .rl-opciones { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .rl-opciones { display: grid; grid-template-columns: repeat(3, 1fr); }
   .rl-op span { min-width: 0; width: 100%; }
   .rc-region { grid-template-columns: 1fr auto; }
   .rc-region-pista { grid-column: 1 / -1; grid-row: 2; }
+  .rc-kpis { grid-template-columns: 1fr 1fr; }
+  .rl-todo-ok { margin-left: 0; width: 100%; }
+  /* La tabla de locales pasa a tarjetas: una por local. */
+  .rc-tabla-locales thead { display: none; }
+  .rc-tabla-locales,
+  .rc-tabla-locales tbody,
+  .rc-tabla-locales tr { display: block; }
+  .rc-tabla-locales tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--linea);
+  }
+  .rc-tabla-locales td {
+    display: block;
+    padding: 0;
+    border: 0;
+    text-align: left;
+  }
+  .rc-tabla-locales td[data-label]:not([data-label=""])::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--tinta-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .rc-tabla-locales td.acciones { grid-column: 1 / -1; }
+  .rc-tabla-locales td.acciones .boton { width: 100%; }
+  .rc-tabla-locales td[colspan] { grid-column: 1 / -1; }
 }
 
 /* Acta de recepción impresa. */

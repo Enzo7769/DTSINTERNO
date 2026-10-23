@@ -1198,6 +1198,42 @@ afirmar(
     && regionDesdeTexto("XII") === "MA",
   "la planilla de locales se lee desde Excel con regiones flexibles"
 );
+const conComillas = leerPlanillaLocales(
+  "Código,Local,Región,Equipos\nLID05,\"Líder, Centro\",VI Región,0\n"
+    + "LID06,\"Dice \"\"Sur\"\"\",Libertador General Bernardo "
+    + "O'Higgins,2\n",
+  "Walmart Líder"
+);
+afirmar(
+  conComillas.locales[0].nombre === "Líder, Centro"
+    && conComillas.locales[0].region === "LI"
+    && conComillas.locales[0].equipos.length === 0
+    && conComillas.locales[1].nombre === "Dice \"Sur\""
+    && conComillas.locales[1].region === "LI"
+    && conComillas.locales[1].equipos.length === 2
+    && regionDesdeTexto("Aisén del General Carlos Ibáñez del Campo") === "AI"
+    && regionDesdeTexto("Magallanes y de la Antártica Chilena") === "MA"
+    && regionDesdeTexto("Región de Los Ríos") === "LR"
+    && regionDesdeTexto("xyz") === "",
+  "la planilla respeta comillas, equipos en 0 y nombres largos de región"
+);
+const futuro = normalizarLocal({
+  contrato: "X", codigo: "LID07", region: "RM",
+  equipos: [{ etapa: "recibido", fechaRecepcion: "2099-01-01" }]
+});
+const apagado = normalizarLocal({
+  contrato: "X", codigo: "LID08", region: "RM",
+  equipos: [{ tipo: "visor", etapa: "revisado", enciende: "no",
+    checklist: Object.fromEntries(ITEMS_RECEPCION
+      .map((item) => [item.id, { estado: "noprobado" }])) }]
+});
+afirmar(
+  !validarLocal(futuro, [], "", "2026-10-23").valido
+    && validarLocal(futuro, []).valido
+    && resultadoEquipo(apagado.equipos[0]) === "danado"
+    && novedades([apagado], ITEMS_RECEPCION)[0].id === "_enciende",
+  "recepción futura se rechaza y «no enciende» aparece en novedades"
+);
 
 if (fallos > 0) {
   process.exitCode = 1;

@@ -47,6 +47,7 @@ export const ESTADOS_COMPONENTE = [
   { id: "ok", etiqueta: "OK" },
   { id: "danado", etiqueta: "Dañado" },
   { id: "falta", etiqueta: "Falta" },
+  { id: "noprobado", etiqueta: "No probado" },
   { id: "na", etiqueta: "No aplica" }
 ];
 
