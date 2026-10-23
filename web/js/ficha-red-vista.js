@@ -14,6 +14,9 @@ const TXT = {
     + "Si agregas uno nuevo en datos de config, "
     + "aparece acá. Completa todos los campos.",
   titulo: "2. Datos de red",
+  grupoIdentificacion: "Identificación",
+  grupoRed: "Red",
+  grupoSoporte: "Soporte y monitoreo (DTS)",
   vacio:
     "Primero crea tótems o visores en 1. Datos de config.",
   idCentro: "ID centro",
@@ -115,11 +118,16 @@ function tarjetaRed(fila, i, oficinas, ops) {
   const card = document.createElement("article");
   card.className = "ficha-red-card";
   const h = document.createElement("h3");
-  h.textContent = `${i + 1}. ${fila.equipo || TXT.equipo}`;
+  h.className = "ficha-red-titulo";
+  const num = document.createElement("span");
+  num.className = "ficha-num";
+  num.textContent = String(i + 1);
+  h.append(num, document.createTextNode(fila.equipo || TXT.equipo));
   card.append(h);
   const grid = document.createElement("div");
   grid.className = "ficha-red-grid";
   grid.append(
+    grupo(TXT.grupoIdentificacion),
     dato(TXT.equipo, fijo(fila.equipo)),
     dato(
       TXT.tienda,
@@ -133,6 +141,7 @@ function tarjetaRed(fila, i, oficinas, ops) {
       TXT.ubicacion,
       campo(fila.ubicacion, `red.${i}.ubicacion`, 80)
     ),
+    grupo(TXT.grupoRed),
     dato(TXT.ip, campoIp(fila.ip, `red.${i}.ip`)),
     dato(
       TXT.mascara,
@@ -148,6 +157,7 @@ function tarjetaRed(fila, i, oficinas, ops) {
   if (!ops.ocultarInternos) {
     const bloq = ops.internosEditables === false;
     grid.append(
+      grupo(TXT.grupoSoporte),
       dato(
         TXT.idSitio,
         campo(fila.idSitio, `red.${i}.idSitio`, 20, bloq)
@@ -168,6 +178,18 @@ function tarjetaRed(fila, i, oficinas, ops) {
   }
   card.append(grid);
   return card;
+}
+
+/**
+ * Subtítulo que ocupa toda la fila de la grilla.
+ * @param {string} texto
+ * @returns {HTMLElement}
+ */
+function grupo(texto) {
+  const h = document.createElement("h4");
+  h.className = "ficha-red-grupo";
+  h.textContent = texto;
+  return h;
 }
 
 /**

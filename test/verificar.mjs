@@ -94,10 +94,12 @@ import {
 } from "../web/js/ficha-menu-vista.js";
 import { preservarRedInterna } from "../web/js/ficha-red-vista.js";
 import {
+  codigoTicket,
   esSi,
   faseTrasDescanso,
   formatearRut,
-  mensajeTicket
+  mensajeTicket,
+  rutConPuntos
 } from "../web/js/ficha-sim-totem.js";
 import { aplicarFiltros, ordenarPorSalida } from "../web/js/filtros.js";
 import {
@@ -1076,6 +1078,15 @@ afirmar(
     && revisar({ mac: "" }).errores
       .some((texto) => texto.startsWith("Indica la MAC")),
   "el checklist revisa el orden de las fechas y explica la MAC inválida"
+);
+
+afirmar(
+  codigoTicket(7, 0, false) === "A-007"
+    && codigoTicket(12, 2, false) === "C-012"
+    && codigoTicket(3, 1, true) === "P-003"
+    && rutConPuntos("123456785") === "12.345.678-5"
+    && rutConPuntos("1") === "1",
+  "el ticket simulado lleva letra del trámite y RUT con puntos"
 );
 
 if (fallos > 0) {

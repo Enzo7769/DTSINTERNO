@@ -3,8 +3,10 @@
  *   Config. menú, desde el video de descanso hasta el ticket.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-13
- * Dependencias: ninguna
+ * Dependencias: sim-ticket-cine
  */
+
+import { reproducirTicket } from "./sim-ticket-cine.js";
 
 const VIDEO = "./assets/dtsdescanso.mp4";
 const TECLAS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "K", "0", "x"];
@@ -25,7 +27,11 @@ const TXT = {
   marca: "DTS",
   submarca: "AUTOSERVICIO",
   ticket: "Ticket emitido",
-  gracias: "Retire su número y aguarde el llamado."
+  gracias: "Retire su número y aguarde el llamado.",
+  verImpresion: "Ver impresión",
+  bienvenido: "Bienvenido",
+  general: "General",
+  preferenteCorto: "Preferente"
 };
 
 const estados = new Map();
@@ -77,6 +83,62 @@ export function mensajeTicket(rut, tramite, sub, numero) {
 }
 
 /**
+ * Código del ticket: una letra por trámite (A, B, C…) o P si es
+ * atención preferente, y el número con tres cifras.
+ * @param {number} numero
+ * @param {number} indiceTramite
+ * @param {boolean} preferente
+ * @returns {string}
+ */
+export function codigoTicket(numero, indiceTramite, preferente) {
+  const i = Math.max(0, Number(indiceTramite) || 0) % 26;
+  const letra = preferente ? "P" : String.fromCharCode(65 + i);
+  return `${letra}-${String(numero).padStart(3, "0")}`;
+}
+
+/**
+ * RUT con puntos de miles: 12.345.678-5.
+ * @param {string} crudo
+ * @returns {string}
+ */
+export function rutConPuntos(crudo) {
+  const rut = formatearRut(crudo);
+  const [cuerpo, dv] = rut.split("-");
+  if (!dv) return rut;
+  return `${cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}-${dv}`;
+}
+
+/**
+ * Datos que se imprimen en el ticket de la simulación.
+ * @param {object} est
+ * @param {object} fila
+ * @returns {object}
+ */
+function datosTicket(est, fila) {
+  const preferente = est.tipo === "preferente";
+  const numero = Number(est.ticket) || 1;
+  const fecha = new Date(est.emitido || Date.now());
+  return {
+    codigo: codigoTicket(numero, est.idx, preferente),
+    tramite: est.tramite,
+    sub: est.sub,
+    rut: est.rut ? rutConPuntos(est.rut) : "",
+    atencion: preferente ? TXT.preferenteCorto : TXT.general,
+    totem: fila.totem || "",
+    fecha: fecha.toLocaleString("es-CL", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }),
+    antes: (numero * 7) % 9 + 1
+  };
+}
+
+/**
+ * El tótem completo: cabezal, pantalla, ranura de impresión y base.
  * @param {object} fila
  * @param {number} indice
  * @param {string} teclado
@@ -88,10 +150,25 @@ export function crearSimTotem(fila, indice, teclado) {
   caja.dataset.simIndice = String(indice);
   const h = document.createElement("h3");
   h.textContent = `Simulación · ${fila.totem || "Tótem"}`;
+  const mueble = document.createElement("div");
+  mueble.className = "sim-mueble";
+  const cabezal = document.createElement("div");
+  cabezal.className = "sim-cabezal";
+  const logo = document.createElement("img");
+  logo.src = "./assets/logo-dts.png";
+  logo.alt = "";
+  cabezal.append(logo, document.createTextNode(TXT.submarca));
   const marco = document.createElement("div");
   marco.className = "sim-marco";
   marco.append(pintarFase(fila, indice, teclado));
-  caja.append(h, marco);
+  const impresora = document.createElement("div");
+  impresora.className = "sim-impresora";
+  impresora.setAttribute("aria-hidden", "true");
+  impresora.append(document.createElement("span"));
+  const base = document.createElement("div");
+  base.className = "sim-base";
+  mueble.append(cabezal, marco, impresora, base);
+  caja.append(h, mueble);
   return caja;
 }
 
@@ -105,15 +182,17 @@ export function alPulsarSim(evento, menu) {
   if (!nodo || !menu) return false;
   const p = nodo.dataset.sim.split(":");
   const i = Number(p[0]);
-  aplicarSim(p, estadoDe(i), (menu.totems || [])[i] || {});
+  const fila = (menu.totems || [])[i] || {};
+  const est = estadoDe(i);
+  aplicarSim(p, est, fila);
   const caja = nodo.closest(".sim-totem");
   if (caja) {
     const marco = caja.querySelector(".sim-marco");
-    marco.replaceChildren(pintarFase(
-      (menu.totems || [])[i] || {},
-      i,
-      menu.teclado
-    ));
+    marco.replaceChildren(pintarFase(fila, i, menu.teclado));
+  }
+  if (est.fase === "ticket" && (est.animar || p[1] === "verTicket")) {
+    est.animar = false;
+    reproducirTicket(datosTicket(est, fila));
   }
   return true;
 }
@@ -156,6 +235,7 @@ function aplicarSim(p, est, fila) {
     est.fase = faseTrasDescanso(fila);
     return;
   }
+  if (accion === "verTicket") return;
   if (accion === "tipo") {
     est.tipo = p[2] || "";
     est.fase = esSi(fila.ingresoRut) ? "rut" : "tramites";
@@ -184,7 +264,7 @@ function aplicarSim(p, est, fila) {
     return;
   }
   if (accion === "sub") {
-    emitir(est, p[3] || "");
+    emitir(est, p.slice(3).join(":"), Number(p[2]));
     return;
   }
   if (accion === "volver") {
@@ -211,18 +291,22 @@ function elegirTramite(est, fila, idx) {
     est.subIdx = idx;
     return;
   }
-  emitir(est, "");
+  emitir(est, "", idx);
 }
 
 /**
  * @param {object} est
  * @param {string} sub
+ * @param {number} idx trámite elegido, para la letra del ticket
  * @returns {void}
  */
-function emitir(est, sub) {
+function emitir(est, sub, idx) {
   ultimoTicket += 1;
   est.sub = sub;
+  est.idx = idx;
   est.ticket = String(ultimoTicket);
+  est.emitido = Date.now();
+  est.animar = true;
   est.fase = "ticket";
 }
 
@@ -277,7 +361,19 @@ function pantallaDescanso(i) {
   caja.type = "button";
   caja.className = "sim-pantalla sim-descanso";
   caja.dataset.sim = `${i}:tocar`;
+  // Pantalla de descanso propia por si el video no está o no carga.
+  const marca = document.createElement("div");
+  marca.className = "sim-reposo";
+  const logo = document.createElement("img");
+  logo.src = "./assets/logo-dts.png";
+  logo.alt = "";
+  const hola = document.createElement("strong");
+  hola.textContent = TXT.bienvenido;
+  const sub = document.createElement("small");
+  sub.textContent = TXT.submarca;
+  marca.append(logo, hola, sub);
   const video = document.createElement("video");
+  video.addEventListener("error", () => video.remove());
   video.src = VIDEO;
   video.autoplay = true;
   video.muted = true;
@@ -288,7 +384,7 @@ function pantallaDescanso(i) {
   const aviso = document.createElement("span");
   aviso.className = "sim-toque";
   aviso.textContent = TXT.toque;
-  caja.append(video, aviso);
+  caja.append(marca, video, aviso);
   return caja;
 }
 
@@ -328,7 +424,7 @@ function pantallaRut(i, est, fila, teclado) {
   pad.className = "vista-teclado";
   const campo = document.createElement("div");
   campo.className = "vista-rut-campo sim-rut";
-  campo.textContent = formatearRut(est.rut);
+  campo.textContent = rutConPuntos(est.rut);
   const grilla = document.createElement("div");
   grilla.className = "vista-pad";
   TECLAS.forEach((tecla) => {
@@ -395,11 +491,15 @@ function pantallaTicket(i, est) {
   const caja = pantallaBase(TXT.ticket);
   const nro = document.createElement("p");
   nro.className = "sim-ticket-nro";
-  nro.textContent = `N° ${est.ticket}`;
+  nro.textContent = codigoTicket(
+    Number(est.ticket),
+    est.idx,
+    est.tipo === "preferente"
+  );
   const msg = document.createElement("p");
   msg.className = "sim-ticket-msg";
   msg.textContent = mensajeTicket(
-    formatearRut(est.rut),
+    est.rut ? rutConPuntos(est.rut) : "",
     est.tramite,
     est.sub,
     Number(est.ticket)
@@ -407,7 +507,10 @@ function pantallaTicket(i, est) {
   const ok = document.createElement("p");
   ok.className = "sim-ticket-ok";
   ok.textContent = TXT.gracias;
-  caja.append(nro, msg, ok, pie([pill(TXT.nuevo, `${i}:nuevo`)]));
+  caja.append(nro, msg, ok, pie([
+    pill(TXT.verImpresion, `${i}:verTicket`),
+    pill(TXT.nuevo, `${i}:nuevo`)
+  ]));
   return caja;
 }
 

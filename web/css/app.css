@@ -3244,3 +3244,498 @@ td.acciones .boton {
 }
 
 .ficha-red-card { background: #fbfdfe; }
+
+/* ==========================================================
+   Simulación del tótem: mueble, reposo y escena del ticket
+   ========================================================== */
+
+.sim-mueble {
+  position: relative;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 0 14px 0;
+  background: linear-gradient(180deg, #2c3a44 0%, #1d262d 100%);
+  border-radius: 26px 26px 10px 10px;
+  box-shadow: 0 24px 50px rgba(8, 52, 76, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.sim-cabezal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  color: #cfe3ec;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+}
+
+.sim-cabezal img { width: 22px; height: auto; }
+
+.sim-mueble .sim-marco {
+  padding: 8px;
+  background: #0d1216;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 2px #3a4954;
+}
+
+.sim-impresora {
+  display: grid;
+  place-items: center;
+  height: 46px;
+}
+
+.sim-impresora span {
+  width: 46%;
+  height: 8px;
+  background: #0b0f12;
+  border-radius: 6px;
+  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.8),
+    0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.sim-base {
+  height: 26px;
+  margin: 0 -14px;
+  background: linear-gradient(180deg, #3a4954, #222c33);
+  border-radius: 0 0 10px 10px;
+}
+
+/* Reposo de marca cuando no hay video. */
+.sim-descanso { display: grid; }
+
+.sim-reposo {
+  grid-area: 1 / 1;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  min-height: 460px;
+  background: radial-gradient(circle at 30% 20%, #1a7fa8, #08344c 70%);
+  color: #ffffff;
+  animation: sim-respira 4s ease-in-out infinite;
+}
+
+.sim-reposo img {
+  width: 92px;
+  height: auto;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.35));
+}
+
+.sim-reposo strong { font-size: 26px; }
+
+.sim-reposo small { letter-spacing: 0.3em; font-size: 11px; opacity: 0.8; }
+
+.sim-descanso video { grid-area: 1 / 1; }
+
+@keyframes sim-respira {
+  50% { filter: brightness(1.12); }
+}
+
+.sim-ticket-nro { letter-spacing: 0.04em; }
+
+/* Escena del ticket (pantalla completa, sobre la ficha). */
+.sim-cine {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px 16px 18px;
+  background: radial-gradient(circle at 50% 30%, #1d3b4d, #050b10 75%);
+  overflow: hidden;
+}
+
+.sim-cine-escena {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sim-cine-totem {
+  position: relative;
+  width: 230px;
+  padding: 0 12px;
+  background: linear-gradient(180deg, #2c3a44, #1d262d);
+  border-radius: 22px 22px 8px 8px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+  /* El acercamiento se centra en el ticket, bajo la ranura. */
+  transform-origin: 50% 430px;
+}
+
+.sim-cine-cabeza {
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: #cfe3ec;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+}
+
+.sim-cine-pantalla {
+  position: relative;
+  height: 250px;
+  display: grid;
+  place-items: center;
+  background: #e9eef1;
+  border: 6px solid #0d1216;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 800;
+  color: #08344c;
+}
+
+.sim-cine-pantalla p { grid-area: 1 / 1; margin: 0 14px; }
+
+.sim-cine-retire { opacity: 0; color: var(--ok); }
+
+.sim-cine-impresora {
+  position: relative;
+  height: 64px;
+  display: grid;
+  place-items: center;
+}
+
+.sim-cine-led {
+  position: absolute;
+  right: 18px;
+  top: 14px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2bd36b;
+  box-shadow: 0 0 8px #2bd36b;
+}
+
+.sim-cine-ranura {
+  position: relative;
+  width: 150px;
+  height: 8px;
+  background: #050708;
+  border-radius: 6px;
+}
+
+/* El papel cuelga desde la ranura y crece hacia abajo. */
+.sim-cine-papel {
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  width: 136px;
+  height: 0;
+  overflow: hidden;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.sim-cine-base {
+  height: 22px;
+  margin: 0 -12px;
+  background: linear-gradient(180deg, #3a4954, #222c33);
+  border-radius: 0 0 8px 8px;
+}
+
+.sim-cine-leyenda {
+  min-height: 1.4em;
+  margin: 0;
+  color: #e3f1f7;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.sim-cine-barra {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(520px, 100%);
+}
+
+.sim-cine-progreso {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.sim-cine-progreso span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #4fc3f7;
+}
+
+/* Línea de tiempo: 0–1,9 s imprime; 1,9–3,5 s se acerca. */
+.sim-cine.reproduciendo .sim-cine-papel {
+  animation: sim-papel 1.6s steps(16, end) 0.3s forwards;
+}
+
+.sim-cine.reproduciendo .sim-cine-led {
+  animation: sim-led 0.25s linear 0s 7 alternate;
+}
+
+.sim-cine.reproduciendo .sim-cine-imprime {
+  animation: sim-fuera 0.3s ease 1.9s forwards;
+}
+
+.sim-cine.reproduciendo .sim-cine-retire {
+  animation: sim-dentro 0.3s ease 1.9s forwards;
+}
+
+.sim-cine.reproduciendo .sim-cine-totem {
+  animation: sim-acerca 1.5s cubic-bezier(0.45, 0, 0.2, 1) 2s forwards;
+}
+
+.sim-cine.reproduciendo .sim-cine-progreso span {
+  animation: sim-progreso 3.5s linear forwards;
+}
+
+@keyframes sim-papel {
+  to { height: 240px; }
+}
+
+@keyframes sim-led {
+  to { opacity: 0.2; }
+}
+
+@keyframes sim-fuera {
+  to { opacity: 0; }
+}
+
+@keyframes sim-dentro {
+  to { opacity: 1; }
+}
+
+@keyframes sim-acerca {
+  to { transform: translateY(-26vh) scale(2.2); }
+}
+
+@keyframes sim-progreso {
+  to { width: 100%; }
+}
+
+/* El ticket impreso. */
+.ticket {
+  width: 136px;
+  padding: 10px 10px 14px;
+  background: #fffdf8;
+  color: #1b1b1b;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 6.5px;
+  line-height: 1.35;
+  text-align: center;
+  position: relative;
+}
+
+/* Borde dentado del corte de papel. */
+.ticket::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -6px;
+  height: 6px;
+  background:
+    linear-gradient(135deg, #fffdf8 33%, transparent 33%) 0 0 / 8px 6px,
+    linear-gradient(225deg, #fffdf8 33%, transparent 33%) 0 0 / 8px 6px;
+}
+
+.ticket p { margin: 0; }
+
+.ticket-marca {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-bottom: 5px;
+  border-bottom: 1px dashed #b9b9b9;
+}
+
+.ticket-marca img { width: 14px; height: auto; }
+
+.ticket-marca strong { display: block; font-size: 8px; }
+
+.ticket-marca small { display: block; font-size: 4.5px; letter-spacing: 0.2em; }
+
+.ticket-hola { margin-top: 5px !important; font-weight: 700; }
+
+.ticket-etq { color: #555; }
+
+.ticket-num {
+  margin: 2px 0 3px !important;
+  font-family: var(--fuente);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #08344c;
+}
+
+.ticket-tramite {
+  padding: 3px 4px;
+  border: 1px solid #1b1b1b;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.ticket-datos { margin: 5px 0 0; text-align: left; }
+
+.ticket-datos div {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  border-bottom: 1px dotted #c9c9c9;
+}
+
+.ticket-datos dt { color: #555; }
+
+.ticket-datos dd { margin: 0; font-weight: 700; text-align: right; }
+
+.ticket-pie { margin-top: 5px !important; font-weight: 700; }
+
+.ticket-barras {
+  height: 16px;
+  margin-top: 5px;
+  background: repeating-linear-gradient(90deg, #1b1b1b 0 1px, #fff 1px 2px,
+    #1b1b1b 2px 4px, #fff 4px 5px, #1b1b1b 5px 6px, #fff 6px 8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim-reposo { animation: none; }
+  .sim-cine.reproduciendo .sim-cine-papel,
+  .sim-cine.reproduciendo .sim-cine-led,
+  .sim-cine.reproduciendo .sim-cine-imprime,
+  .sim-cine.reproduciendo .sim-cine-retire,
+  .sim-cine.reproduciendo .sim-cine-totem,
+  .sim-cine.reproduciendo .sim-cine-progreso span {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+}
+
+/* Botones de la pantalla del tótem con tamaño de pantalla real. */
+.vista-pie {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.vista-pill {
+  min-width: 0;
+  padding: 7px 14px;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.vista-boton { font-size: 12px; border-radius: 4px; }
+
+.vista-tecla { font-size: 15px; }
+
+.sim-ticket-msg, .sim-ticket-ok { font-size: 13px; }
+
+/* 1.1 Config. menú: cada trámite en una línea con su número. */
+.ficha-menu-tramite {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #f4f9fb;
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+}
+
+.ficha-tramite-fila {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.ficha-tramite-fila input {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--linea);
+  border-radius: 10px;
+  background: var(--blanco);
+  font: inherit;
+  color: var(--tinta);
+}
+
+.ficha-menu-tramite > .ficha-tramite-fila input { font-weight: 700; }
+
+.ficha-menu-subs {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0 18px;
+  padding-left: 12px;
+  border-left: 2px solid #cfe3ec;
+}
+
+.ficha-menu-subs .ficha-num {
+  min-width: 34px;
+  background: var(--blanco);
+  border: 1px solid #cfe3ec;
+  font-size: 12px;
+}
+
+.ficha-menu-tramite .ficha-acciones { margin: 8px 0 0 30px; }
+
+.ficha-menu-flags {
+  padding: 10px 12px;
+  background: var(--papel);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+}
+
+/* 2. Datos de red: tarjeta por equipo con grupos. */
+.ficha-red-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: var(--azul-profundo);
+}
+
+.ficha-red-grupo {
+  grid-column: 1 / -1;
+  margin: 8px 0 -2px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--linea);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--azul);
+}
+
+.ficha-red-grid > .ficha-red-grupo:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.ficha-red-card .campo > span { font-size: 13px; }
+
+.ficha-red-card input:disabled { background: var(--papel); color: var(--tinta-suave); }
+
+/* Celular y tablet: el menú no queda fijo sobre el contenido. Cerrado,
+   es solo una barra con el botón para abrirlo. */
+@media (max-width: 980px) {
+  .sidebar { position: static; }
+
+  .app.menu-cerrado { grid-template-columns: minmax(0, 1fr); }
+
+  .menu-cerrado .sidebar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+  }
+
+  .menu-cerrado .btn-menu .btn-menu-texto { display: inline; }
+}

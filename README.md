@@ -199,6 +199,22 @@ filtros en un panel, tablas con encabezado fijo y acciones compactas
 («capa de orden visual» al final de `web/css/app.css`). En pantallas
 angostas las tablas se desplazan dentro de su recuadro.
 
+## Simulación del tótem (1.1 Config. menú)
+
+La simulación muestra el mueble completo (cabezal, pantalla, ranura de
+impresión y base) y recorre el flujo real: descanso, tipo de
+atención, RUT, trámite y subtrámite. Al emitir el ticket se abre una
+escena animada (`web/js/sim-ticket-cine.js`, solo CSS, sin archivos
+de video): el tótem imprime, el papel sale por la ranura y la vista se
+acerca hasta leer el ticket con su código (letra del trámite o «P»
+si es preferente), trámite, RUT, tótem, fecha y personas en espera.
+«Ver impresión» la repite. Respeta «reducir movimiento».
+
+El video de descanso se busca en `web/assets/dtsdescanso.mp4`. Ese
+archivo no está en el repositorio: mientras falte, se muestra una
+pantalla de descanso animada con la marca. Para usar el video real,
+cópialo en esa ruta.
+
 ## Módulos siguientes
 
 El menú ya reserva Recepción de equipos y Usuarios. Esos accesos
