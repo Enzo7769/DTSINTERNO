@@ -237,6 +237,19 @@ export function etiquetaEstado(envio) {
 }
 
 /**
+ * Clase de color de la etiqueta de estado.
+ * @param {object} envio
+ * @returns {string}
+ */
+export function claseEstado(envio) {
+  if (!envio) return "";
+  if (envio.estado === "finalizado") return "pill-aprobado";
+  if (envioVencido(envio)) return "pill-rechazado";
+  if (envio.estado === "en_curso") return "pill-proceso";
+  return "pill-pendiente";
+}
+
+/**
  * @param {unknown} valor
  * @returns {string}
  */

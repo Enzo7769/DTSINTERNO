@@ -12,7 +12,6 @@ export const MT = {
   nuevo: "Nuevo modelo",
   editar: "Editar modelo",
   sinGuardar: "Borrador todavía no guardado",
-  registros: "modelos",
   cargando: "Cargando modelos…",
   sinResultados: "No hay modelos con esos filtros.",
   vacio: "El catálogo de modelos está vacío.",

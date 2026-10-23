@@ -23,7 +23,7 @@ import {
 } from "./modelo-pdf.js";
 import { listarModelos } from "./modelo-repositorio.js";
 import { llenarFiltroTipo } from "./tipos-equipo.js";
-import { avisar, mostrarVista, porId } from "./ui.js";
+import { avisar, mostrarVista, porId, textoConteo } from "./ui.js";
 
 const ORDEN_TIPO = new Map(TIPOS_MODELO.map((tipo, i) => [tipo.id, i]));
 const DEMORA_CIERRE = 140;
@@ -147,7 +147,7 @@ function pintar() {
   const lista = filtrados();
   const grid = porId("espec-grid");
   grid.replaceChildren();
-  porId("espec-conteo").textContent = `${lista.length} ${ET.registros}`;
+  porId("espec-conteo").textContent = textoConteo(lista.length, "ficha");
   porId("espec-vacio").hidden = cache.length > 0;
   const estado = porId("espec-estado");
   estado.hidden = lista.length > 0 || cache.length === 0;

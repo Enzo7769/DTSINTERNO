@@ -36,7 +36,7 @@ import {
   etiquetaTipo,
   llenarFiltroTipo
 } from "./tipos-equipo.js";
-import { avisar, mostrarVista, porId } from "./ui.js";
+import { avisar, mostrarVista, porId, textoConteo } from "./ui.js";
 
 const ORDEN_TIPO = new Map(TIPOS_EQUIPO.map((tipo, i) => [tipo.id, i]));
 
@@ -166,7 +166,7 @@ function pintar() {
   pintarKpis(cache);
   const cuerpo = porId("costo-tabla");
   cuerpo.replaceChildren();
-  porId("costo-conteo").textContent = `${lista.length} ${CT.registros}`;
+  porId("costo-conteo").textContent = textoConteo(lista.length, "costo");
   porId("costo-vacio").hidden = cache.length > 0;
   const estado = porId("costo-estado");
   estado.hidden = lista.length > 0 || cache.length === 0;

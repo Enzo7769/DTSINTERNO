@@ -12,7 +12,6 @@ export const ET = {
   tituloEdicion: "Especificaciones | DTS",
   titulo: "Especificaciones técnicas",
   ayuda: "Ficha técnica y clientes de cada equipo.",
-  registros: "fichas",
   cargando: "Cargando fichas…",
   sinResultados: "No hay fichas con esos filtros.",
   vacio: "Todavía no hay modelos. Créalos en Modelos.",

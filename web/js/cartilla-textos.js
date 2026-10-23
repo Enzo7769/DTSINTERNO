@@ -12,7 +12,6 @@ export const TXT = {
   nueva: "Nueva cartilla de ruta",
   editar: "Editar cartilla de ruta",
   sinGuardar: "Borrador todavía no guardado",
-  registros: "cartillas",
   cargando: "Cargando cartillas…",
   sinResultados: "No hay cartillas con esos filtros.",
   noEncontrada: "Esa cartilla ya no está disponible.",

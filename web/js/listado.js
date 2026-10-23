@@ -17,7 +17,7 @@ import {
   listarChecklists
 } from "./repositorio.js";
 import { etiquetaTipo, llenarFiltroTipo } from "./tipos-equipo.js";
-import { avisar, mostrarVista, porId } from "./ui.js";
+import { avisar, mostrarVista, porId, textoConteo } from "./ui.js";
 
 const CAMPOS = [
   "filtro-proyecto",
@@ -103,7 +103,7 @@ async function pintar() {
   const cuerpo = porId("tabla-cuerpo");
   cuerpo.replaceChildren();
   porId("conteo-registros").textContent =
-    `${lista.length} ${MSG.registros}`;
+    textoConteo(lista.length, "registro");
   if (!lista.length) {
     porId("estado-listado").textContent = MSG.sinResultados;
     porId("estado-listado").hidden = false;
@@ -149,10 +149,12 @@ function crearFila(registro) {
     registro.ip,
     formatearFecha(registro.fechaInspeccion)
   ];
+  const clases = ["numero", "", "nowrap", "fuerte texto", "texto",
+    "texto", "nowrap", "nowrap mono", "nowrap mono", "nowrap"];
   celdas.forEach((texto, indice) => {
     const td = document.createElement("td");
     td.textContent = texto || "—";
-    if (indice === 0) td.className = "numero";
+    if (clases[indice]) td.className = clases[indice];
     tr.append(td);
   });
   tr.append(celdaEstado(registro.estado));

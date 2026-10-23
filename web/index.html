@@ -963,7 +963,11 @@
             </p>
           </div>
           <div class="encabezado-acciones">
-            <button id="btn-modelo-todo" class="boton" type="button">
+            <button
+              id="btn-modelo-todo"
+              class="boton boton-secundario"
+              type="button"
+            >
               Exportar PDF general
             </button>
             <button id="btn-modelo-nuevo" class="boton" type="button">
@@ -1125,7 +1129,11 @@
               por la foto para ver sus datos.
             </p>
           </div>
-          <button id="btn-espec-todo" class="boton" type="button">
+          <button
+            id="btn-espec-todo"
+            class="boton boton-secundario"
+            type="button"
+          >
             Exportar PDF general
           </button>
         </header>
@@ -1304,18 +1312,21 @@
               Cada ficha se guarda con el nombre de su licitación.
             </p>
           </div>
-          <div class="ficha-guardar">
-            <label class="campo">
-              Licitación
-              <input id="ficha-licitacion" maxlength="160"
-                autocomplete="off">
-            </label>
-            <label class="campo">
-              Fichas guardadas
-              <select id="ficha-lista" data-sin-cambios>
-                <option value="">Nueva ficha</option>
-              </select>
-            </label>
+        </header>
+        <div class="tarjeta barra-ficha">
+          <label class="campo">
+            <span>Abrir ficha</span>
+            <select id="ficha-lista" data-sin-cambios>
+              <option value="">Nueva ficha</option>
+            </select>
+          </label>
+          <label class="campo barra-ficha-nombre">
+            <span>Nombre de la licitación</span>
+            <input id="ficha-licitacion" maxlength="160"
+              autocomplete="off"
+              placeholder="Ej.: Licitación Municipalidad de Maipú">
+          </label>
+          <div class="grupo-botones">
             <button id="btn-ficha-guardar" class="boton" type="button">
               Guardar ficha
             </button>
@@ -1336,19 +1347,25 @@
               Eliminar
             </button>
           </div>
-        </header>
-        <p id="ficha-aviso" class="ayuda" role="status"></p>
+        </div>
+        <p id="ficha-aviso" class="ayuda ficha-aviso" role="status"></p>
         <div id="ficha-cuerpo"></div>
       </section>
 
       <section id="vista-fichas-envio" class="vista" hidden>
         <header class="encabezado">
           <div>
-            <p class="kicker">Configuración para el cliente</p>
-            <h1>Fichas de licitaciones</h1>
+            <p class="kicker">Ficha de configuración</p>
+            <h1>Enlaces para clientes</h1>
+            <p class="ayuda">
+              Genera un enlace para que el cliente complete la ficha de
+              su licitación. Sigue su avance y descarga el PDF aquí.
+            </p>
           </div>
         </header>
-        <form id="form-envio-nueva" class="filtros ficha-envio-form">
+        <form id="form-envio-nueva" class="tarjeta panel-nuevo">
+          <h2>Nuevo enlace</h2>
+          <div class="panel-nuevo-campos">
           <label class="campo">
             <span>Nombre de la licitación</span>
             <input id="envio-licitacion" maxlength="160"
@@ -1364,11 +1381,13 @@
             <input id="envio-limite" type="datetime-local">
           </label>
           <button id="btn-envio-generar" class="boton" type="button">
-            Generar ficha
+            Generar enlace
           </button>
+          </div>
           <label class="campo ficha-envio-link">
-            <span>Enlace para el cliente</span>
-            <input id="envio-enlace" readonly>
+            <span>Enlace generado (cópialo y envíalo al cliente)</span>
+            <input id="envio-enlace" readonly
+              placeholder="Aparece aquí al generar el enlace">
           </label>
         </form>
         <p id="conteo-envios" class="conteo"></p>

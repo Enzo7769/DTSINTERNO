@@ -16,7 +16,7 @@ import { MSG } from "./constantes.js";
 import { mensajeError } from "./errores.js";
 import { registrarError } from "./logger.js";
 import { etiquetaTipo, llenarFiltroTipo } from "./tipos-equipo.js";
-import { avisar, mostrarVista, porId } from "./ui.js";
+import { avisar, mostrarVista, porId, textoConteo } from "./ui.js";
 
 const FILTROS = {
   cliente: "cf-cliente",
@@ -24,6 +24,10 @@ const FILTROS = {
   numeroSerie: "cf-serie",
   creadaPorNombre: "cf-creada"
 };
+
+/** Clase de cada columna: N°, tipo, cliente, modelo, serie, parte… */
+const CLASES_CELDA = ["numero", "", "texto", "fuerte", "nowrap mono",
+  "nowrap mono", "texto", "texto"];
 
 let cache = null;
 
@@ -101,7 +105,7 @@ function pintar() {
   const cuerpo = porId("cartilla-tabla");
   cuerpo.replaceChildren();
   porId("cartilla-conteo").textContent =
-    `${lista.length} ${TXT.registros}`;
+    textoConteo(lista.length, "cartilla");
   const estado = porId("cartilla-estado");
   estado.hidden = lista.length > 0;
   estado.textContent = TXT.sinResultados;
@@ -126,7 +130,8 @@ function crearFila(registro) {
   ].forEach((valor, indice) => {
     const td = document.createElement("td");
     td.textContent = valor ? String(valor) : "—";
-    if (indice === 0) td.className = "numero";
+    const clase = CLASES_CELDA[indice];
+    if (clase) td.className = clase;
     tr.append(td);
   });
   const acciones = document.createElement("td");

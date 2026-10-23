@@ -31,7 +31,7 @@ import {
 } from "./modelo-textos.js";
 import { importarModelos } from "./planilla-importar.js";
 import { llenarFiltroTipo } from "./tipos-equipo.js";
-import { avisar, mostrarVista, porId } from "./ui.js";
+import { avisar, mostrarVista, porId, textoConteo } from "./ui.js";
 
 const ORDEN_TIPO = new Map(TIPOS_MODELO.map((tipo, i) => [tipo.id, i]));
 const CLIENTES_VISIBLES = 2;
@@ -135,7 +135,7 @@ function pintar() {
   const lista = filtrados();
   const grid = porId("modelo-grid");
   grid.replaceChildren();
-  porId("modelo-conteo").textContent = `${lista.length} ${MT.registros}`;
+  porId("modelo-conteo").textContent = textoConteo(lista.length, "modelo");
   porId("modelo-vacio").hidden = cache.length > 0;
   const estado = porId("modelo-estado");
   estado.hidden = lista.length > 0 || cache.length === 0;

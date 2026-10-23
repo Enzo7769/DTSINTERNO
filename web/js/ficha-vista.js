@@ -159,7 +159,7 @@ const VAL_MANUAL = "__manual";
 
 let datos = null;
 /**
- * Lo que se edita en «Editar ficha». montarFichaEn (enlace del
+ * Lo que se edita en «Fichas guardadas». montarFichaEn (enlace del
  * cliente) usa `datos` para otra ficha; al volver se recupera esta.
  */
 let datosEditor = null;
@@ -981,7 +981,7 @@ function totems(ficha) {
 function modulos(ficha) {
   asegurarMenu(ficha);
   const nodo = bloque(
-    "6",
+    "5",
     "UAC · Módulos de atención",
     "Solo aparecen los trámites del sector, "
     + "creados en 1.1 Config. menú."
@@ -1023,7 +1023,7 @@ function modulos(ficha) {
  */
 function usuarios(ficha) {
   const nodo = bloque(
-    "7",
+    "6",
     "Usuarios de administración Clever Q2"
   );
   const general = document.createElement("h3");
@@ -1068,7 +1068,7 @@ function usuarios(ficha) {
  */
 function ejecutivos(ficha) {
   const nodo = bloque(
-    "8",
+    "7",
     "Usuarios UAC",
     "Ejecutivos que atienden al público."
   );
@@ -1115,7 +1115,7 @@ function ejecutivos(ficha) {
  */
 function visores(ficha) {
   const nodo = bloque(
-    "9",
+    "8",
     "Visores",
     "Puede haber más de un visor por tótem."
   );
@@ -1146,7 +1146,7 @@ function visores(ficha) {
  */
 function parametros(ficha) {
   const nodo = bloque(
-    "10",
+    "9",
     "Parámetros de tipos de atención",
     TXT.notaSalud
   );
@@ -1214,7 +1214,7 @@ function parametro(titulo, ayuda, valor, ruta, max) {
  */
 function fisicos(ficha) {
   const nodo = bloque(
-    "11",
+    "10",
     "Datos físicos del establecimiento"
   );
   const equipos = ficha.equipos || [];
@@ -1419,7 +1419,7 @@ function opcion(valor, etiqueta) {
  * @returns {HTMLElement}
  */
 function requisitos(ficha) {
-  const nodo = bloque("12", "Requerimientos adicionales");
+  const nodo = bloque("11", "Requerimientos adicionales");
   nodo.append(tabla(
     ["Requerimiento", TXT.estado, ""],
     ficha.requisitos.map((fila, i) => [

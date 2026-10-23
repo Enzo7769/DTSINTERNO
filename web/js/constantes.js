@@ -103,7 +103,6 @@ export const MSG = {
   volver: "Volver al listado",
   nuevo: "Nuevo checklist",
   editar: "Editar checklist",
-  registros: "registros",
   limpiarFiltros: "Limpiar filtros",
   abrir: "Abrir",
   eliminar: "Eliminar",
@@ -168,24 +167,29 @@ export const MODULOS = [
     habilitado: true
   },
   {
-    id: "costos-hardware",
-    etiqueta: "Costos hardware",
+    id: "equipos",
+    etiqueta: "Equipos y costos",
     habilitado: true,
     hijos: [
+      {
+        id: "modelos-hw",
+        etiqueta: "Modelos",
+        rutas: ["/modelos", "/modelo"],
+        destino: "#/modelos"
+      },
+      {
+        id: "especificaciones-hw",
+        etiqueta: "Especificaciones técnicas",
+        rutas: ["/especificaciones", "/especificacion"],
+        destino: "#/especificaciones"
+      },
       {
         id: "base-costos",
         etiqueta: "Base de costos HW",
         rutas: ["/costos", "/costo"],
         destino: "#/costos"
-      },
+      }
     ]
-  },
-  {
-    id: "modelos-hw",
-    etiqueta: "Modelos",
-    rutas: ["/modelos", "/modelo"],
-    destino: "#/modelos",
-    habilitado: true
   },
   {
     id: "ficha-config",
@@ -194,24 +198,17 @@ export const MODULOS = [
     hijos: [
       {
         id: "ficha-editor",
-        etiqueta: "Editar ficha",
+        etiqueta: "Fichas guardadas",
         rutas: ["/ficha"],
         destino: "#/ficha"
       },
       {
         id: "fichas-envio",
-        etiqueta: "Fichas de licitaciones",
+        etiqueta: "Enlaces para clientes",
         rutas: ["/fichas-envio", "/ficha-envio"],
         destino: "#/fichas-envio"
       }
     ]
-  },
-  {
-    id: "especificaciones-hw",
-    etiqueta: "Especificaciones técnicas",
-    rutas: ["/especificaciones", "/especificacion"],
-    destino: "#/especificaciones",
-    habilitado: true
   },
   {
     id: "recepcion",

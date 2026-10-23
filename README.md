@@ -189,6 +189,16 @@ npx firebase emulators:exec --only firestore,storage \
 Después de cambiar reglas, publícalas:
 `firebase deploy --only firestore:rules,storage`.
 
+## Menú y diseño
+
+El menú sigue el flujo de trabajo: Checklist de salida, Cartilla de
+ruta, **Equipos y costos** (Modelos, Especificaciones técnicas,
+Base de costos HW) y **Ficha de configuración** (Fichas guardadas,
+Enlaces para clientes). Los listados comparten el mismo estilo:
+filtros en un panel, tablas con encabezado fijo y acciones compactas
+(«capa de orden visual» al final de `web/css/app.css`). En pantallas
+angostas las tablas se desplazan dentro de su recuadro.
+
 ## Módulos siguientes
 
 El menú ya reserva Recepción de equipos y Usuarios. Esos accesos

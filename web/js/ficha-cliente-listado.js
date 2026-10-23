@@ -18,6 +18,7 @@ import {
   listarEnvios
 } from "./ficha-cliente-repositorio.js";
 import {
+  claseEstado,
   etiquetaEstado,
   plazoDeCampo,
   plazoDesdeDias,
@@ -30,12 +31,11 @@ import { registrarError } from "./logger.js";
 import { avisar, mostrarVista, pedirConfirmacion, porId } from "./ui.js";
 
 const TXT = {
-  titulo: "Fichas de licitaciones",
-  kicker: "Configuración para el cliente",
-  registros: "fichas",
+  titulo: "Enlaces para clientes | DTS",
+  kicker: "Ficha de configuración",
   cargando: "Cargando fichas…",
   vacio: "Aún no hay fichas enviadas al cliente.",
-  generar: "Generar ficha",
+  generar: "Generar enlace",
   copiado: "Enlace copiado.",
   creada: "Ficha generada. Copia el enlace para el cliente.",
   fallo: "No se pudo generar la ficha. Revisa la conexión e "
@@ -127,7 +127,7 @@ function pintar() {
   const cuerpo = porId("envio-cuerpo");
   cuerpo.replaceChildren();
   porId("conteo-envios").textContent =
-    `${lista.length} ${TXT.registros}`;
+    lista.length === 1 ? "1 enlace" : `${lista.length} enlaces`;
   if (!lista.length) {
     porId("estado-envios").textContent = TXT.vacio;
     porId("estado-envios").hidden = false;
@@ -244,22 +244,27 @@ function crearFila(fila) {
   const tr = document.createElement("tr");
   const resto = restoPlazo(fila.plazoHasta);
   const celdas = [
-    String(fila.numero || ""),
-    fila.licitacion || "",
-    fila.rellenadoPor || "—",
-    formatearFechaHora(fila.creadoEn),
-    formatearFechaHora(fila.actualizadoEn),
-    formatearFechaHora(fila.finalizadoEn) || "—",
-    formatearFechaHora(fila.plazoHasta),
-    resto.texto,
-    etiquetaEstado(fila)
+    [String(fila.numero || ""), "numero"],
+    [fila.licitacion || "", "fuerte"],
+    [fila.rellenadoPor || "—", ""],
+    [formatearFechaHora(fila.creadoEn), "nowrap"],
+    [formatearFechaHora(fila.actualizadoEn), "nowrap"],
+    [formatearFechaHora(fila.finalizadoEn) || "—", "nowrap"],
+    [formatearFechaHora(fila.plazoHasta), "nowrap"],
+    [resto.texto, "nowrap"]
   ];
-  celdas.forEach((texto) => {
+  celdas.forEach(([texto, clase]) => {
     const td = document.createElement("td");
     td.textContent = texto;
+    if (clase) td.className = clase;
     tr.append(td);
   });
-  tr.append(acciones(fila));
+  const estado = document.createElement("td");
+  const pill = document.createElement("span");
+  pill.className = `pill ${claseEstado(fila)}`;
+  pill.textContent = etiquetaEstado(fila);
+  estado.append(pill);
+  tr.append(estado, acciones(fila));
   return tr;
 }
 
@@ -269,7 +274,7 @@ function crearFila(fila) {
  */
 function acciones(fila) {
   const td = document.createElement("td");
-  td.className = "tabla-acciones";
+  td.className = "acciones";
   const botones = [
     [TXT.ver, "ver"],
     [TXT.copiar, "copiar"],
