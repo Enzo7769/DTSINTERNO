@@ -141,14 +141,15 @@ export function idEn(lista, id) {
  * Monto con el formato chileno de la moneda.
  * @param {number} valor
  * @param {string} moneda
+ * @param {number} [maxDecimales] para mostrar más que los de la moneda
  * @returns {string}
  */
-export function formatoMonto(valor, moneda) {
+export function formatoMonto(valor, moneda, maxDecimales) {
   const def = MONEDAS.find((item) => item.id === moneda) || MONEDAS[0];
   const n = Number(valor) || 0;
   const texto = n.toLocaleString("es-CL", {
     minimumFractionDigits: def.decimales,
-    maximumFractionDigits: def.decimales
+    maximumFractionDigits: Math.max(def.decimales, maxDecimales || 0)
   });
   return `${def.prefijo}${texto}`;
 }
@@ -166,7 +167,10 @@ export function leerMonto(valor, decimales) {
     if (!Number.isFinite(valor) || valor < 0) return 0;
     return Math.round(valor * factor) / factor;
   }
-  let limpio = String(valor ?? "").replace(/[^\d.,]/g, "");
+  const escrito = String(valor ?? "").trim();
+  // Los montos no son negativos: «-100» no se lee como 100.
+  if (/^-/.test(escrito)) return 0;
+  let limpio = escrito.replace(/[^\d.,]/g, "");
   if (!limpio) return 0;
   const coma = limpio.lastIndexOf(",");
   const punto = limpio.lastIndexOf(".");
@@ -176,12 +180,33 @@ export function leerMonto(valor, decimales) {
     limpio = limpio.replace(miles, "").replace(decimal, ".");
   } else if (coma >= 0) {
     limpio = limpio.replace(/\./g, "").replace(",", ".");
-  } else if (/^\d{1,3}(\.\d{3})+$/.test(limpio)) {
+  } else if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(limpio)) {
+    // «1.500» son mil quinientos; «0.125» es un decimal.
     limpio = limpio.replace(/\./g, "");
   }
   const n = Number(limpio);
   if (!Number.isFinite(n) || n < 0) return 0;
   return Math.round(n * factor) / factor;
+}
+
+/**
+ * Lee un entero escrito a mano. «1.000» es mil; «2,5» o «1.5» no son
+ * enteros y devuelven null para avisar en vez de adivinar.
+ * @param {unknown} valor
+ * @returns {number|null} 0 si está vacío
+ */
+export function leerEntero(valor) {
+  if (typeof valor === "number") {
+    return Number.isSafeInteger(valor) && valor >= 0 ? valor : null;
+  }
+  const limpio = String(valor ?? "").replace(/\s/g, "");
+  if (!limpio) return 0;
+  const sinMiles = /^[1-9]\d{0,2}(\.\d{3})+$/.test(limpio)
+    ? limpio.replace(/\./g, "")
+    : limpio;
+  if (!/^\d+$/.test(sinMiles)) return null;
+  const n = Number(sinMiles);
+  return Number.isSafeInteger(n) ? n : null;
 }
 
 /**

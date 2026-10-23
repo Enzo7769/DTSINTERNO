@@ -161,7 +161,7 @@ function tablaComponentes(lineas, moneda) {
       tr.append(celdaConcepto(linea));
       [
         linea.fabricante || "—",
-        numeroCorto(linea.cantidad),
+        numeroCorto(linea.cantidad, 3),
         formatoMonto(linea.valor, linea.moneda || moneda),
         formatoMonto(linea.subtotalCosto ?? linea.subtotal, moneda)
       ].forEach((texto, indice) => {
@@ -195,11 +195,12 @@ function celdaConcepto(linea) {
 
 /**
  * @param {number} valor
+ * @param {number} [decimales] máximo de decimales (2)
  * @returns {string}
  */
-function numeroCorto(valor) {
+function numeroCorto(valor, decimales = 2) {
   return (Number(valor) || 0).toLocaleString("es-CL", {
-    maximumFractionDigits: 2
+    maximumFractionDigits: decimales
   });
 }
 

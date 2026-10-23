@@ -24,6 +24,7 @@ import {
   claveModelo,
   decimalesDe,
   idEn,
+  leerEntero,
   leerMonto
 } from "./hw-catalogo.js";
 import { texto } from "./sanitizar.js";
@@ -46,6 +47,13 @@ export const LIMITES_COSTO = {
 
 /** Decimales admitidos en la cantidad (ej.: 0,125 l o 0,333). */
 const DECIMALES_CANTIDAD = 3;
+
+/**
+ * Decimales con que se guarda cada línea convertida. Se redondea
+ * solo el total: si cada línea se redondeara a la moneda del costo,
+ * cien tornillos de $4 en un costo en dólares sumarían 0.
+ */
+const DECIMALES_LINEA = 4;
 
 /**
  * @param {object} entrada
@@ -76,8 +84,10 @@ export function normalizarCosto(entrada) {
     moneda,
     costo,
     cantidadEquipos,
+    // El lote parte de la suma sin redondear: 10 equipos de UF 0,5874
+    // son UF 5,87 y no 10 × 0,59.
     costoLote: Math.min(
-      redondear(costo * cantidadEquipos, decimales),
+      redondear((lineas.length ? suma : costo) * cantidadEquipos, decimales),
       L.montoMax
     ),
     tipoCambio,
@@ -124,7 +134,9 @@ function normalizarLineas(lineas, moneda, cambio) {
         leerMonto(linea.cantidad, DECIMALES_CANTIDAD),
         L.cantidadMax
       );
-      const valor = Math.min(leerMonto(linea.valor, decimales), L.montoMax);
+      // En UF el valor unitario admite 4 decimales (ej.: HH 0,156).
+      const decValor = propia === "UF" ? 4 : decimales;
+      const valor = Math.min(leerMonto(linea.valor, decValor), L.montoMax);
       const decSubtotal = propia === "UF" ? 4 : decimales;
       const subtotal = redondear(cantidad * valor, decSubtotal);
       return {
@@ -140,7 +152,7 @@ function normalizarLineas(lineas, moneda, cambio) {
         subtotal,
         subtotalCosto: redondear(
           convertir(subtotal, propia, moneda, cambio),
-          decimalesDe(moneda)
+          Math.max(DECIMALES_LINEA, decimalesDe(moneda))
         )
       };
     })
@@ -153,11 +165,8 @@ function normalizarLineas(lineas, moneda, cambio) {
  * @returns {number}
  */
 function entero(valor, max) {
-  const limpio = String(valor ?? "").replace(/\D/g, "");
-  if (!limpio) return 0;
-  const n = Number(limpio);
-  if (!Number.isSafeInteger(n) || n < 0) return 0;
-  return Math.min(n, max);
+  const n = leerEntero(valor);
+  return n ? Math.min(n, max) : 0;
 }
 
 /**
@@ -165,9 +174,10 @@ function entero(valor, max) {
  * @param {string} [fechaCruda] valor escrito, para avisar si es inválido
  * @param {object[]} [lineasCrudas] filas escritas, para avisar de links
  *   que se descartarían
+ * @param {string} [equiposCrudo] cantidad de equipos escrita
  * @returns {{valido: boolean, errores: string[], campos: object}}
  */
-export function validarCosto(datos, fechaCruda, lineasCrudas) {
+export function validarCosto(datos, fechaCruda, lineasCrudas, equiposCrudo) {
   const errores = [];
   const campos = {};
   const fallar = (campo, mensaje) => {
@@ -182,6 +192,10 @@ export function validarCosto(datos, fechaCruda, lineasCrudas) {
     fallar("k-fecha", CT.fechaInvalida);
   } else if (datos.fechaActualizacion > hoyIso()) {
     fallar("k-fecha", CT.fechaFutura);
+  }
+  if (equiposCrudo !== undefined
+    && String(equiposCrudo).trim() && !leerEntero(equiposCrudo)) {
+    fallar("k-equipos", CT.equiposInvalidos);
   }
   validarCambio(datos, fallar);
   (datos.lineas || []).forEach((linea, indice) => {

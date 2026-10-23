@@ -28,6 +28,7 @@ import {
   GRUPOS_FICHA,
   avanceFicha,
   formatoMonto,
+  leerEntero,
   leerMonto
 } from "../web/js/hw-catalogo.js";
 import {
@@ -379,6 +380,34 @@ afirmar(
 afirmar(leerMonto("1.277,20", 2) === 1277.2, "lee 1.277,20");
 afirmar(leerMonto("1277.20", 2) === 1277.2, "lee 1277.20");
 afirmar(leerMonto("730.000", 0) === 730000, "lee 730.000 en CLP");
+afirmar(
+  leerMonto("0.125", 3) === 0.125 && leerMonto("0.500", 3) === 0.5
+    && leerMonto("1.500", 0) === 1500 && leerMonto("-100", 0) === 0,
+  "«0.125» es decimal, «1.500» es mil quinientos y no hay negativos"
+);
+afirmar(
+  leerEntero("2,5") === null && leerEntero("1.5") === null
+    && leerEntero("1.000") === 1000 && leerEntero("") === 0
+    && leerEntero("12") === 12,
+  "la cantidad de equipos solo acepta enteros"
+);
+const tornillos = normalizarCosto({
+  moneda: "USD", tipoCambio: { usd: 950, uf: 0 }, cantidadEquipos: "2,5",
+  lineas: Array.from({ length: 100 }, () => ({
+    concepto: "Tornillo", cantidad: 1, valor: 4, moneda: "CLP"
+  }))
+});
+const hhUf = normalizarCosto({
+  moneda: "UF", tipoCambio: { usd: 950, uf: 39000 },
+  lineas: [{ concepto: "HH", cantidad: "0,04", valor: "0,156",
+    moneda: "UF" }]
+});
+afirmar(
+  tornillos.costo === 0.42 && tornillos.cantidadEquipos === 1
+    && validarCosto(tornillos, "", [], "2,5").campos["k-equipos"] === true
+    && hhUf.lineas[0].valor === 0.156 && hhUf.lineas[0].subtotal === 0.0062,
+  "el costo suma líneas sin redondear cada una y la HH guarda 4 decimales"
+);
 afirmar(
   formatoMonto(3840.69, "USD") === "USD 3.840,69",
   "muestra USD con formato chileno"

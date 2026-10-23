@@ -67,6 +67,8 @@ export const CT = {
   items: "Ítems",
   parametros: "Parámetros del costeo",
   cantidadEquipos: "Cantidad de equipos",
+  equiposInvalidos:
+    "La cantidad de equipos debe ser un número entero (ej.: 1, 10 o 1.000).",
   dolar: "Dólar (CLP por 1 USD)",
   uf: "UF (CLP por 1 UF)",
   resumenCategorias: "Resumen por categoría",
@@ -172,6 +174,8 @@ export const CT = {
   cambioReferencia:
     "No se pudo consultar la cotización: son valores de "
     + "referencia. Revísalos o elige otro día.",
+  ufSinCotizacion:
+    "La UF no vino con esa cotización: revisa el valor de la UF.",
   cambioManual:
     "Dólar o UF escritos a mano. Elige un día para usar su "
     + "cotización.",

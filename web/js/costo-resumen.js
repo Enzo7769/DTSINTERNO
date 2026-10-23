@@ -84,23 +84,24 @@ export function vigentes(costos) {
 
 /**
  * Cambio del costo por equipo entre las dos últimas entradas del
- * historial, en dólares para comparar aunque cambie la moneda.
+ * historial, en la moneda del costo: así un alza del dólar no se ve
+ * como un cambio de precio. Si cambió la moneda no se compara (igual
+ * que el historial del formulario).
  * @param {object} registro
- * @param {{usd: number, uf: number}} referencia
  * @returns {{pct: number, desde: string}|null} null sin dos entradas
+ *   comparables
  */
-export function variacion(registro, referencia) {
+export function variacion(registro) {
   const hist = (registro && registro.historial) || [];
   if (hist.length < 2) return null;
-  const [antes, ahora] = hist.slice(-2).map((entrada) => enUsd(
-    entrada.costo,
-    { moneda: entrada.moneda, tipoCambio: entrada },
-    referencia
-  ));
+  const [previa, ultima] = hist.slice(-2);
+  if ((previa.moneda || "USD") !== (ultima.moneda || "USD")) return null;
+  const antes = Number(previa.costo) || 0;
+  const ahora = Number(ultima.costo) || 0;
   if (!(antes > 0) || !(ahora > 0)) return null;
   return {
     pct: redondear(((ahora - antes) / antes) * 100, 1),
-    desde: hist[hist.length - 2].fecha || ""
+    desde: previa.fecha || ""
   };
 }
 
@@ -134,7 +135,7 @@ export function filasResumen(costos, referencia, hoy) {
     fecha: registro.fechaActualizacion || "",
     dias: diasDesde(registro.fechaActualizacion, hoy),
     cotizaciones,
-    variacion: variacion(registro, referencia),
+    variacion: variacion(registro),
     conDesglose: (registro.lineas || []).length > 0
   })).sort((a, b) => b.usd - a.usd);
 }

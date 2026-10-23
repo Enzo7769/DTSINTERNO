@@ -8,7 +8,11 @@
  *   costo-hh, costo-lineas, costo-textos, hw-catalogo, logger, ui
  */
 
-import { fijarPaqueteHh, pintarPanelHh } from "./costo-hh.js";
+import {
+  fijarPaqueteHh,
+  paqueteHhActivo,
+  pintarPanelHh
+} from "./costo-hh.js";
 import { APP } from "./config.js";
 import { conceptoDe, textoUsdYClp } from "./costeo.js";
 import {
@@ -35,6 +39,8 @@ const COLUMNAS = [
 /** @type {Promise<Record<string, string[][]>>|null} */
 let carga = null;
 let activa = CATEGORIAS_COSTO[0].id;
+/** Si el paquete HH lo encendió el cliente elegido (no el usuario). */
+let hhDelCliente = false;
 
 /**
  * La lista de componentes se descarga solo al abrir un costo.
@@ -94,6 +100,7 @@ export function iniciarHoja(alCambiar) {
       return;
     }
     if ("hhPaquete" in campo.dataset) {
+      hhDelCliente = false;
       alCambiar();
       return;
     }
@@ -114,6 +121,7 @@ export function iniciarHoja(alCambiar) {
  * @returns {Promise<void>}
  */
 export async function pintarHoja(lineas) {
+  hhDelCliente = false;
   const zona = porId("costo-lineas");
   const aviso = document.createElement("p");
   aviso.className = "ayuda";
@@ -441,7 +449,16 @@ function moverPestana(evento) {
  */
 export function aplicarCotizacionCliente(cliente) {
   quitarAutomaticos();
-  fijarPaqueteHh(Boolean(cliente && cliente.incluyeHh));
+  // El cliente enciende el paquete HH si su receta lo trae; solo se
+  // apaga si lo había encendido otro cliente, nunca el usuario.
+  if (hhDelCliente) {
+    fijarPaqueteHh(false);
+    hhDelCliente = false;
+  }
+  if (cliente && cliente.incluyeHh && !paqueteHhActivo()) {
+    fijarPaqueteHh(true);
+    hhDelCliente = true;
+  }
   if (!cliente) return 0;
   let incluidas = 0;
   let cupo = true;
