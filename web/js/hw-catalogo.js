@@ -154,12 +154,18 @@ export function formatoMonto(valor, moneda) {
 }
 
 /**
- * Lee montos como 3840.69, 3.840,69 o 3840,69.
+ * Lee montos como 3840.69, 3.840,69 o 3840,69. Un número ya guardado
+ * se usa tal cual: 0.125 no es «ciento veinticinco».
  * @param {unknown} valor
  * @param {number} decimales
  * @returns {number}
  */
 export function leerMonto(valor, decimales) {
+  const factor = 10 ** decimales;
+  if (typeof valor === "number") {
+    if (!Number.isFinite(valor) || valor < 0) return 0;
+    return Math.round(valor * factor) / factor;
+  }
   let limpio = String(valor ?? "").replace(/[^\d.,]/g, "");
   if (!limpio) return 0;
   const coma = limpio.lastIndexOf(",");
@@ -175,7 +181,6 @@ export function leerMonto(valor, decimales) {
   }
   const n = Number(limpio);
   if (!Number.isFinite(n) || n < 0) return 0;
-  const factor = 10 ** decimales;
   return Math.round(n * factor) / factor;
 }
 

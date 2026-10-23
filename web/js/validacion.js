@@ -8,7 +8,7 @@
 import { APP } from "./config.js";
 import { SECCIONES, seccionDeItem } from "./catalogo.js";
 import { LIMITES, MSG, mensajeExtra } from "./constantes.js";
-import { fechaValida } from "./fechas.js";
+import { fechaValida, hoyIso } from "./fechas.js";
 import {
   imagenSegura,
   normalizarIp,
@@ -155,14 +155,14 @@ function firmaDe(firma) {
  * @param {object} datos
  * @returns {{valido: boolean, errores: string[], campos: object}}
  */
-export function validarDatos(datos) {
+export function validarDatos(datos, crudo) {
   const errores = [];
   const campos = {};
   const fallar = (campo, mensaje) => {
     errores.push(mensaje);
     campos[campo] = true;
   };
-  revisarCabecera(datos, fallar);
+  revisarCabecera(datos, fallar, crudo || {});
   revisarItems(datos, fallar);
   revisarCierre(datos, fallar);
   return {
@@ -177,19 +177,30 @@ export function validarDatos(datos) {
  * @param {Function} fallar
  * @returns {void}
  */
-function revisarCabecera(datos, fallar) {
+function revisarCabecera(datos, fallar, crudo) {
+  const escrito = (valor) => String(valor ?? "").trim() !== "";
   if (!datos.tipoEquipo) fallar("tipoEquipo", TXT_TIPO.falta);
   if (!datos.proyecto) fallar("proyecto", MSG.faltaProyecto);
   if (!datos.cliente) fallar("cliente", MSG.faltaCliente);
   if (!datos.tecnico) fallar("tecnico", MSG.faltaTecnico);
   if (!datos.numeroSerie) fallar("numeroSerie", MSG.faltaSerie);
-  if (!datos.mac) fallar("mac", MSG.faltaMac);
-  if (!datos.ip) fallar("ip", MSG.faltaIp);
-  if (!fechaValida(datos.fechaInspeccion)) {
-    fallar("fechaInspeccion", MSG.faltaFechaInspeccion);
+  if (!datos.mac) {
+    fallar("mac", escrito(crudo.mac) ? MSG.macInvalida : MSG.faltaMac);
   }
-  if (!fechaValida(datos.fechaSalida)) {
+  if (!datos.ip) {
+    fallar("ip", escrito(crudo.ip) ? MSG.ipInvalida : MSG.faltaIp);
+  }
+  const inspeccion = fechaValida(datos.fechaInspeccion);
+  const salida = fechaValida(datos.fechaSalida);
+  if (!inspeccion) {
+    fallar("fechaInspeccion", MSG.faltaFechaInspeccion);
+  } else if (datos.fechaInspeccion > hoyIso()) {
+    fallar("fechaInspeccion", MSG.inspeccionFutura);
+  }
+  if (!salida) {
     fallar("fechaSalida", MSG.faltaFechaSalida);
+  } else if (inspeccion && datos.fechaSalida < datos.fechaInspeccion) {
+    fallar("fechaSalida", MSG.salidaAntes);
   }
 }
 

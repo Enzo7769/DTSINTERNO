@@ -244,11 +244,13 @@ function barra(categoria) {
   buscar.setAttribute("aria-label", CT.buscarPestana);
   buscar.maxLength = 80;
   buscar.dataset.filtro = "1";
+  buscar.dataset.sinCambios = "";
   const solo = document.createElement("label");
   solo.className = "costeo-solo";
   const casilla = document.createElement("input");
   casilla.type = "checkbox";
   casilla.dataset.solo = "1";
+  casilla.dataset.sinCambios = "";
   solo.append(casilla, document.createTextNode(` ${CT.soloSeleccionados}`));
   const agregar = document.createElement("button");
   agregar.type = "button";

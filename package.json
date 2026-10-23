@@ -2,5 +2,8 @@
   "name": "checklist-salida-dts",
   "private": true,
   "type": "module",
-  "description": "Checklist de salida de equipos hardware DTS."
+  "description": "Checklist de salida de equipos hardware DTS.",
+  "scripts": {
+    "test": "node test/verificar.mjs"
+  }
 }

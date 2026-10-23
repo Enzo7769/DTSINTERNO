@@ -136,8 +136,9 @@ imprimen los elementos marcados.
   modelo» (`#/costo?modelo=<id>`), que parte con el nombre y el tipo.
   El costo, a su vez, enlaza a la ficha técnica si el modelo está en
   el catálogo.
-- **Cambios sin guardar**: costo, modelo y ficha técnica avisan
-  antes de salir con cambios pendientes
+- **Cambios sin guardar**: checklist, cartilla, costo, modelo,
+  ficha técnica, ficha de configuración y detalle del enlace avisan
+  antes de salir con cambios pendientes, firmas incluidas
   (`web/js/cambios-pendientes.js`).
 
 Costo y modelo se relacionan por el nombre del modelo, sin
@@ -146,6 +147,47 @@ aparece «Importar planilla de referencia», que carga los datos de
 `Resumen costos Hardware.xlsx` (`web/js/datos-planilla.js`).
 Catálogos editables (líneas, monedas, campos de la ficha) en
 `web/js/hw-catalogo.js`.
+
+## Reglas y validaciones
+
+- **Storage** está cerrado (`storage.rules`): la app no sube
+  archivos; el PDF de la ficha de cliente se arma en el navegador.
+- **Enlace del cliente** (`fichasCliente`): sin sesión solo se lee
+  mientras el plazo está vigente (guarda claves). El cliente solo
+  cambia sus respuestas, su nombre, el estado y agrega historial;
+  no toca plazo, token, auditoría ni el PDF. El historial guarda
+  las últimas 80 acciones.
+- **Checklist**: la fecha de inspección no puede ser futura y la de
+  salida no puede ser anterior a ella. Una MAC o IP mal escrita
+  explica el formato. Un N° de serie repetido pide confirmar.
+  «Marcar todo OK» no responde por el técnico las preguntas Sí/No
+  (¿Tiene BAM?).
+- **Cartilla**: DNS2 y Proxy son opcionales.
+- **Costos**: la fecha de actualización no puede ser futura; un
+  modelo fuera del catálogo pide confirmar. Al elegir un modelo del
+  catálogo se marca su tipo.
+- **Modelos**: al renombrar un modelo con costos, se ofrece cambiar
+  el nombre también en esos costos (`web/js/modelo-costos.js`); al
+  eliminarlo, se avisa cuántos costos lo usan.
+- **Ficha de configuración**: «Nueva ficha» parte en blanco;
+  «Ejemplo SURALIS» carga la ficha de referencia. Una ficha guardada
+  se puede duplicar y eliminar. Abrir un enlace de cliente ya no
+  reemplaza lo que se edita en «Editar ficha».
+- **Enlaces de cliente**: piden un nombre con letras y un plazo
+  futuro; un nombre repetido pide confirmar; ampliar el plazo admite
+  de 1 a 90 días y avisa si reabre una ficha finalizada.
+
+Pruebas: `node test/verificar.mjs`. Las reglas se prueban con el
+emulador (requiere Java), en una carpeta con las herramientas:
+
+```text
+npm install firebase-tools @firebase/rules-unit-testing firebase
+npx firebase emulators:exec --only firestore,storage \
+  --project demo-dts "node test/reglas/reglas.test.mjs"
+```
+
+Después de cambiar reglas, publícalas:
+`firebase deploy --only firestore:rules,storage`.
 
 ## Módulos siguientes
 

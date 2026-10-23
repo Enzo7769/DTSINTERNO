@@ -1312,12 +1312,28 @@
             </label>
             <label class="campo">
               Fichas guardadas
-              <select id="ficha-lista">
+              <select id="ficha-lista" data-sin-cambios>
                 <option value="">Nueva ficha</option>
               </select>
             </label>
             <button id="btn-ficha-guardar" class="boton" type="button">
               Guardar ficha
+            </button>
+            <button
+              id="btn-ficha-copia"
+              class="boton boton-secundario"
+              type="button"
+              hidden
+            >
+              Duplicar
+            </button>
+            <button
+              id="btn-ficha-eliminar"
+              class="boton boton-peligro"
+              type="button"
+              hidden
+            >
+              Eliminar
             </button>
           </div>
         </header>
@@ -1390,6 +1406,7 @@
             Volver al listado
           </button>
         </header>
+        <div id="envio-detalle-contenido">
         <dl class="ficha-envio-meta">
           <div><dt>Quién rellenó</dt><dd id="envio-meta-quien">—</dd></div>
           <div><dt>Estado</dt><dd id="envio-meta-estado">—</dd></div>
@@ -1413,7 +1430,7 @@
           <label class="campo">
             Sumar días al plazo
             <input id="envio-extra-dias" type="number" min="1"
-              max="90" value="3">
+              max="90" value="3" data-sin-cambios>
           </label>
           <button id="btn-envio-plazo" class="boton boton-secundario"
             type="button">
@@ -1433,6 +1450,7 @@
         </div>
         <h2>Historial de modificaciones</h2>
         <ul id="envio-historial" class="ficha-envio-hist"></ul>
+        </div>
         <div id="envio-ficha-cuerpo"></div>
       </section>
     </div>

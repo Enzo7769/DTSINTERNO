@@ -1036,6 +1036,48 @@ afirmar(
   "la ficha resume los costos de su modelo"
 );
 
+const AHORA = Date.UTC(2026, 9, 23);
+const nuevoEnvio = (licitacion, plazoHasta) => validarEnvio({
+  ...fichaEnBlanco(licitacion),
+  licitacion,
+  plazoHasta
+}, AHORA);
+afirmar(
+  nuevoEnvio("Pendiente", AHORA + 3600000).ok
+    && !nuevoEnvio("", AHORA + 3600000).ok
+    && !nuevoEnvio("###", AHORA + 3600000).ok
+    && !nuevoEnvio("SURALIS", AHORA - 1000).ok,
+  "un enlace nuevo pide nombre con letras y un plazo futuro"
+);
+afirmar(
+  leerMonto(0.125, 3) === 0.125
+    && leerMonto(1172.68, 2) === 1172.68
+    && leerMonto("1.277,20", 2) === 1277.2
+    && leerMonto("3.840", 2) === 3840,
+  "un monto ya guardado con 3 decimales no se lee como miles"
+);
+
+const checklistBase = semilla()[0];
+const revisar = (cambios, crudo) => validarDatos(
+  normalizarChecklist({ ...checklistBase, ...cambios }),
+  { ...checklistBase, ...cambios, ...crudo }
+);
+const salidaAntes = revisar({
+  fechaInspeccion: "2026-09-28",
+  fechaSalida: "2026-09-20"
+});
+const macMala = revisar({ mac: "ZZ:11" });
+afirmar(
+  !salidaAntes.valido && salidaAntes.campos.fechaSalida
+    && !revisar({ fechaInspeccion: "2999-01-01",
+      fechaSalida: "2999-01-02" }).campos.fechaSalida
+    && revisar({ fechaInspeccion: "2999-01-01" }).campos.fechaInspeccion
+    && macMala.errores.some((texto) => texto.includes("formato válido"))
+    && revisar({ mac: "" }).errores
+      .some((texto) => texto.startsWith("Indica la MAC")),
+  "el checklist revisa el orden de las fechas y explica la MAC inválida"
+);
+
 if (fallos > 0) {
   process.exitCode = 1;
 } else {

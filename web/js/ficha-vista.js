@@ -3,10 +3,17 @@
  *   «1. Datos de Config.», con los datos de prueba editables.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-13
- * Dependencias: ficha-datos.js, ficha-repositorio.js,
+ * Dependencias: cambios-pendientes.js, ficha-datos.js,
+ *   ficha-repositorio.js,
  *   ficha-validacion.js, logger.js, ui.js
  */
 
+import {
+  cambiosGuardados,
+  confirmarDescarte,
+  marcarCambios,
+  vigilarCambios
+} from "./cambios-pendientes.js";
 import {
   asegurarMenu,
   asegurarRed,
@@ -14,6 +21,7 @@ import {
   equipoFisicoListo,
   equipoVacio,
   FICHA_PRUEBA,
+  fichaEnBlanco,
   modulosDeSector,
   nombreSiguiente,
   nombresUnicos,
@@ -48,20 +56,41 @@ import {
   dibujarDatosRed
 } from "./ficha-red-vista.js";
 import {
+  eliminarFicha,
   guardarFicha,
   listarFichas,
   obtenerFicha
 } from "./ficha-repositorio.js";
 import { validarFicha } from "./ficha-validacion.js";
 import { registrarError } from "./logger.js";
-import { mostrarVista, porId } from "./ui.js";
+import {
+  avisar,
+  mostrarVista,
+  pedirConfirmacion,
+  porId
+} from "./ui.js";
+
+/** Valor del selector que carga los datos de ejemplo (SURALIS). */
+const EJEMPLO = "__ejemplo";
 
 const TXT = {
   kicker: "Clever Q2",
   titulo: "Ficha de configuración",
   ayuda:
     "Cada ficha se guarda con el nombre de su licitación. "
-    + "Los datos de prueba son de SURALIS.",
+    + "«Ejemplo SURALIS» muestra una ficha completa de referencia.",
+  ejemplo: "Ejemplo SURALIS (referencia)",
+  copiaLista:
+    "Copia lista, todavía sin guardar. Cambia el nombre de la "
+    + "licitación y guarda.",
+  sufijoCopia: " (copia)",
+  borrarTitulo: "Eliminar ficha",
+  borrarTexto:
+    "Se eliminará la ficha «{nombre}». Esta acción no se puede "
+    + "deshacer.",
+  borrarOk: "Eliminar",
+  borrada: "Ficha eliminada.",
+  falloBorrar: "No se pudo eliminar la ficha.",
   licitacion: "Licitación",
   guardadas: "Fichas guardadas",
   nueva: "Nueva ficha",
@@ -129,6 +158,11 @@ const TXT = {
 const VAL_MANUAL = "__manual";
 
 let datos = null;
+/**
+ * Lo que se edita en «Editar ficha». montarFichaEn (enlace del
+ * cliente) usa `datos` para otra ficha; al volver se recupera esta.
+ */
+let datosEditor = null;
 let actual = null;
 let autor = null;
 let controles = false;
@@ -163,7 +197,8 @@ export async function mostrarFicha() {
   soloLectura = false;
   internosRedEditables = true;
   raizActiva = porId("ficha-cuerpo");
-  if (!datos) datos = structuredClone(FICHA_PRUEBA);
+  if (!datosEditor) datosEditor = fichaEnBlanco("");
+  datos = datosEditor;
   asegurarMenu(datos);
   asegurarRed(datos);
   asegurarHorarios(datos);
@@ -1752,6 +1787,7 @@ function listaDinamica(valor, ruta, obtener) {
 function enlazarControles() {
   if (controles) return;
   controles = true;
+  vigilarCambios("vista-ficha");
   porId("ficha-licitacion").addEventListener("input", () => {
     datos.licitacion = porId("ficha-licitacion").value;
   });
@@ -1761,6 +1797,8 @@ function enlazarControles() {
   porId("btn-ficha-guardar").addEventListener("click", () => {
     alGuardar().catch((error) => registrarError(error, "ficha.guardar"));
   });
+  porId("btn-ficha-copia").addEventListener("click", copiarFicha);
+  porId("btn-ficha-eliminar").addEventListener("click", pedirBorrarFicha);
 }
 
 /**
@@ -1775,30 +1813,110 @@ async function pintarLista(idMarcado) {
   vacia.value = "";
   vacia.textContent = TXT.nueva;
   select.append(vacia);
-  lista.forEach((ficha) => {
-    const opcion = document.createElement("option");
-    opcion.value = ficha.id;
-    opcion.textContent = ficha.licitacion || ficha.id;
-    select.append(opcion);
-  });
+  lista
+    .sort((a, b) => String(a.licitacion || "")
+      .localeCompare(String(b.licitacion || ""), "es"))
+    .forEach((ficha) => {
+      const opcion = document.createElement("option");
+      opcion.value = ficha.id;
+      opcion.textContent = ficha.licitacion || ficha.id;
+      select.append(opcion);
+    });
+  const ejemplo = document.createElement("option");
+  ejemplo.value = EJEMPLO;
+  ejemplo.textContent = TXT.ejemplo;
+  select.append(ejemplo);
   select.value = idMarcado || "";
+  pintarAccionesFicha();
 }
 
 /**
- * Carga la ficha elegida o vuelve a los datos de prueba.
+ * Copiar y eliminar solo tienen sentido con una ficha guardada.
+ * @returns {void}
+ */
+function pintarAccionesFicha() {
+  porId("btn-ficha-copia").hidden = !actual;
+  porId("btn-ficha-eliminar").hidden = !actual;
+}
+
+/**
+ * Deja en pantalla una copia sin guardar de la ficha abierta.
+ * @returns {void}
+ */
+function copiarFicha() {
+  if (!actual) return;
+  datos = structuredClone(datos);
+  datos.licitacion = `${datos.licitacion || ""}${TXT.sufijoCopia}`
+    .slice(0, 160);
+  datosEditor = datos;
+  actual = null;
+  porId("ficha-licitacion").value = datos.licitacion;
+  porId("ficha-lista").value = "";
+  porId("ficha-aviso").textContent = TXT.copiaLista;
+  pintarAccionesFicha();
+  marcarCambios("vista-ficha");
+  porId("ficha-licitacion").focus();
+}
+
+/**
+ * @returns {void}
+ */
+function pedirBorrarFicha() {
+  if (!actual) return;
+  const nombre = actual.licitacion || actual.id;
+  pedirConfirmacion({
+    titulo: TXT.borrarTitulo,
+    texto: TXT.borrarTexto.replace("{nombre}", nombre),
+    ok: TXT.borrarOk,
+    onOk: () => {
+      borrarFicha().catch((error) => {
+        registrarError(error, "ficha.eliminar");
+        avisar(TXT.falloBorrar, "error");
+      });
+    }
+  });
+}
+
+/**
+ * @returns {Promise<void>}
+ */
+async function borrarFicha() {
+  await eliminarFicha(actual.id);
+  actual = null;
+  datos = fichaEnBlanco("");
+  datosEditor = datos;
+  asegurarMenu(datos);
+  asegurarRed(datos);
+  porId("ficha-licitacion").value = "";
+  porId("ficha-aviso").textContent = "";
+  cambiosGuardados("vista-ficha");
+  modoManual.clear();
+  refrescar();
+  await pintarLista("");
+  avisar(TXT.borrada, "ok");
+}
+
+/**
+ * Carga la ficha elegida o una en blanco.
  * @returns {Promise<void>}
  */
 async function alElegir() {
   const id = porId("ficha-lista").value;
-  if (!id) {
+  if (!confirmarDescarte("vista-ficha")) {
+    porId("ficha-lista").value = actual ? actual.id : "";
+    return;
+  }
+  if (!id || id === EJEMPLO) {
     actual = null;
-    datos = structuredClone(FICHA_PRUEBA);
+    datos = id ? structuredClone(FICHA_PRUEBA) : fichaEnBlanco("");
   } else {
     const registro = await obtenerFicha(id);
     if (!registro) return;
     actual = registro;
     datos = sinAuditoria(registro);
   }
+  datosEditor = datos;
+  pintarAccionesFicha();
   asegurarMenu(datos);
   asegurarRed(datos);
   porId("ficha-licitacion").value = datos.licitacion || "";
@@ -1835,6 +1953,8 @@ async function alGuardar() {
     );
     actual = guardado;
     datos = sinAuditoria(guardado);
+    datosEditor = datos;
+    cambiosGuardados("vista-ficha");
     porId("ficha-licitacion").value = datos.licitacion || "";
     await pintarLista(guardado.id);
     aviso.textContent = TXT.guardada + datos.licitacion + ".";

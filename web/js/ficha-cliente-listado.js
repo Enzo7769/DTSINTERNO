@@ -38,8 +38,14 @@ const TXT = {
   generar: "Generar ficha",
   copiado: "Enlace copiado.",
   creada: "Ficha generada. Copia el enlace para el cliente.",
-  fallo: "No se pudo generar la ficha. Publica "
-    + "firestore.rules en Firebase e inténtalo de nuevo.",
+  fallo: "No se pudo generar la ficha. Revisa la conexión e "
+    + "inténtalo de nuevo.",
+  diasPregunta: "¿Cuántos días sumar al plazo? (1 a 90)",
+  diasReabrir: "Esta ficha está finalizada: al sumar días se reabre "
+    + "y el cliente podrá volver a editarla. ¿Cuántos días? (1 a 90)",
+  diasInvalidos: "Escribe entre 1 y 90 días.",
+  repetida: "Ya hay una ficha enviada con ese nombre de licitación. "
+    + "¿Generar otra igual?",
   plazoOk: "Plazo actualizado.",
   ver: "Ver",
   copiar: "Copiar enlace",
@@ -152,14 +158,24 @@ async function generar() {
     avisar(revision.mensaje, "error");
     return;
   }
-  const guardado = await crearEnvio(
-    revision.datos,
-    autor || { uid: "", email: "" }
-  );
-  cache = null;
-  porId("envio-enlace").value = urlPublica(guardado.token);
-  avisar(TXT.creada, "ok");
-  await mostrarListadoEnvios();
+  const repetida = (cache || []).some((fila) =>
+    fila.licitacionClave === revision.datos.licitacionClave);
+  if (repetida && !window.confirm(TXT.repetida)) return;
+  const boton = porId("btn-envio-generar");
+  boton.disabled = true;
+  try {
+    const guardado = await crearEnvio(
+      revision.datos,
+      autor || { uid: "", email: "" }
+    );
+    cache = null;
+    porId("envio-licitacion").value = "";
+    porId("envio-enlace").value = urlPublica(guardado.token);
+    avisar(TXT.creada, "ok");
+    await mostrarListadoEnvios();
+  } finally {
+    boton.disabled = false;
+  }
 }
 
 /**
@@ -193,10 +209,18 @@ async function alAccion(accion, id) {
     return;
   }
   if (accion === "ampliar") {
-    const extra = Number(prompt("¿Cuántos días sumar?", "3"));
-    if (!Number.isFinite(extra) || extra <= 0) return;
     const fila = (cache || []).find((item) => item.id === id);
     if (!fila) return;
+    const pregunta = fila.estado === "finalizado"
+      ? TXT.diasReabrir
+      : TXT.diasPregunta;
+    const respuesta = window.prompt(pregunta, "3");
+    if (respuesta === null) return;
+    const extra = Number(respuesta);
+    if (!Number.isInteger(extra) || extra < 1 || extra > 90) {
+      avisar(TXT.diasInvalidos, "aviso");
+      return;
+    }
     const ms = fila.plazoHasta && fila.plazoHasta.toMillis
       ? fila.plazoHasta.toMillis()
       : (Number(fila.plazoHasta) || Date.now());

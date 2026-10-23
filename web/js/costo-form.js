@@ -3,8 +3,8 @@
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-02
  * Dependencias: cambios-pendientes, config, costo-clientes, costo-hh,
- *   costo-historial, costo-historial-vista, costo-hoja, costo-lineas, costo-pdf,
- *   costo-repositorio, costo-textos, costo-validacion, errores,
+ *   costo-historial, costo-historial-vista, costo-hoja, costo-lineas,
+ *   costo-pdf, costo-repositorio, costo-textos, costo-validacion, errores,
  *   fechas, hw-catalogo, logger, modelo-repositorio,
  *   tipo-cambio-dia, tipos-equipo, ui
  */
@@ -336,12 +336,25 @@ function pintarAyudaModelo() {
   enlace.hidden = !hallado;
   if (hallado) {
     enlace.href = `#/especificacion?id=${encodeURIComponent(hallado.id)}`;
+    if (!leerTipo(GRUPO_COSTO) && GRUPO_COSTO_IDS.has(hallado.tipo)) {
+      marcarTipo(GRUPO_COSTO, hallado.tipo);
+    }
   }
   if (!clave || !modelos.length) {
     ayuda.textContent = "";
     return;
   }
   ayuda.textContent = hallado ? CT.modeloCatalogo : CT.modeloLibre;
+}
+
+/**
+ * Sin catálogo cargado no se pregunta: puede ser un error de red.
+ * @param {string} clave
+ * @returns {boolean}
+ */
+function modeloEnCatalogo(clave) {
+  return !modelos.length
+    || modelos.some((modelo) => modelo.nombreClave === clave);
 }
 
 /**
@@ -378,6 +391,7 @@ function prepararDiaCotizacion() {
   const fecha = porId("k-cambio-fecha");
   fecha.max = hoyIso();
   fecha.value = hoyIso();
+  porId("k-fecha").max = hoyIso();
 }
 
 /**
@@ -518,6 +532,10 @@ async function guardar(conPdf) {
   );
   pintarErrores(revision);
   if (!revision.valido) return false;
+  if (!modeloEnCatalogo(limpio.modeloClave)
+    && !window.confirm(CT.confirmarModeloLibre)) {
+    return false;
+  }
   const nuevo = !actual;
   limpio.historial = historialAlGuardar(
     actual,

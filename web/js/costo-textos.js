@@ -50,6 +50,10 @@ export const CT = {
   faltaMoneda: "Elige la moneda.",
   faltaCosto: "Indica un costo mayor que cero.",
   fechaInvalida: "La fecha de actualización no es válida.",
+  fechaFutura: "La fecha de actualización no puede ser posterior a hoy.",
+  confirmarModeloLibre:
+    "Ese modelo no está en el catálogo, así que el costo no se verá "
+    + "en ninguna ficha técnica. ¿Guardar igual?",
   faltaConcepto: "indica el componente.",
   cantidadInvalida: "la cantidad debe ser mayor que cero (máx. 9999).",
   faltaDolar:

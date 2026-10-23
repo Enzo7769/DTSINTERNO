@@ -2,11 +2,15 @@
  * Propósito: Formulario de alta y edición de la cartilla de ruta.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-01
- * Dependencias: cartilla-acordeon, cartilla-catalogo,
+ * Dependencias: cambios-pendientes, cartilla-acordeon, cartilla-catalogo,
  *   cartilla-pdf, cartilla-repositorio, cartilla-textos,
  *   cartilla-validacion, config, errores, fechas, firma, logger, ui
  */
 
+import {
+  cambiosGuardados,
+  vigilarCambios
+} from "./cambios-pendientes.js";
 import {
   aplicarFilas,
   fijarPorDefecto,
@@ -68,6 +72,7 @@ let guardando = false;
  * @returns {void}
  */
 export function iniciarCartilla(alGuardar) {
+  vigilarCambios("vista-cartilla");
   pintarTipo(porId("tipo-cartilla"), GRUPO_CARTILLA, "c-tipo");
   pintarAcordeon(porId("cartilla-secciones"));
   pintarFinalizacion(porId("cartilla-final"));
@@ -124,6 +129,7 @@ export async function mostrarCartillaNueva() {
   aplicarFilas({});
   await escribirFinalizacion(finalizacionDeHoy(hoy));
   mostrarVista("vista-cartilla");
+  cambiosGuardados("vista-cartilla");
 }
 
 /**
@@ -150,6 +156,7 @@ export async function mostrarCartillaEdicion(id) {
   aplicarFilas(registro.filas || {});
   await escribirFinalizacion(registro.finalizacion || {});
   mostrarVista("vista-cartilla");
+  cambiosGuardados("vista-cartilla");
 }
 
 /**
@@ -293,6 +300,7 @@ async function guardar(conPdf) {
   try {
     const fresca = await guardarCartilla(limpia, actual, autor);
     actual = fresca;
+    cambiosGuardados("vista-cartilla");
     if (conPdf) await descargarCartillaPdf(fresca);
     mostrarExito(
       nueva ? TXT.creadaTitulo : TXT.actualizadaTitulo,

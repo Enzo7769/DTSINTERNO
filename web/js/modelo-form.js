@@ -3,7 +3,8 @@
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-02
  * Dependencias: cambios-pendientes, errores, hw-catalogo,
- *   imagen-modelo, logger, modelo-pdf, modelo-repositorio, modelo-textos,
+ *   imagen-modelo, logger, modelo-costos, modelo-pdf,
+ *   modelo-repositorio, modelo-textos,
  *   modelo-validacion, tipos-equipo, ui
  *
  * Al guardar se conserva la ficha. Esa se edita en
@@ -18,6 +19,7 @@ import { mensajeError } from "./errores.js";
 import { ESTADOS_MODELO, TIPOS_MODELO } from "./hw-catalogo.js";
 import { reducirImagen } from "./imagen-modelo.js";
 import { registrarError } from "./logger.js";
+import { costosDelModelo, renombrarCostos } from "./modelo-costos.js";
 import { descargarModeloPdf } from "./modelo-pdf.js";
 import {
   guardarModelo,
@@ -26,8 +28,10 @@ import {
 } from "./modelo-repositorio.js";
 import {
   MT,
+  textoCostosRenombrados,
   textoModeloActualizado,
-  textoModeloCreado
+  textoModeloCreado,
+  textoRenombrarCostos
 } from "./modelo-textos.js";
 import {
   normalizarModelo,
@@ -45,12 +49,16 @@ let autor = { uid: "", email: "" };
 let actual = null;
 let imagen = "";
 let guardando = false;
+/** Avisa que cambiaron costos (por ejemplo, al renombrar el modelo). */
+let alRenombrar = () => {};
 
 /**
  * @param {() => void} alGuardar
+ * @param {() => void} [alCambiarCostos]
  * @returns {void}
  */
-export function iniciarModelo(alGuardar) {
+export function iniciarModelo(alGuardar, alCambiarCostos) {
+  if (alCambiarCostos) alRenombrar = alCambiarCostos;
   vigilarCambios("vista-modelo");
   pintarTipo(porId("tipo-modelo"), GRUPO_MODELO, "m-tipo", TIPOS_MODELO,
     MT.leyendaTipo);
@@ -217,11 +225,14 @@ async function guardar(conPdf) {
   pintarErrores(revision);
   if (!revision.valido) return false;
   const nuevo = !actual;
+  const previo = actual;
+  const renombrar = await costosPorRenombrar(previo, limpio);
   guardando = true;
   try {
     const fresco = await guardarModelo(limpio, actual, autor);
     actual = fresco;
     cambiosGuardados("vista-modelo");
+    if (renombrar.length) await renombrarSusCostos(renombrar, fresco);
     if (conPdf) await descargarModeloPdf(fresco);
     mostrarExito(
       nuevo ? MT.creadoTitulo : MT.actualizadoTitulo,
@@ -234,6 +245,45 @@ async function guardar(conPdf) {
     return true;
   } finally {
     guardando = false;
+  }
+}
+
+/**
+ * Si el nombre cambia y hay costos con el anterior, pregunta si se
+ * actualizan para que sigan unidos al modelo.
+ * @param {object|null} previo
+ * @param {object} limpio
+ * @returns {Promise<object[]>} costos a renombrar; vacío si no
+ */
+async function costosPorRenombrar(previo, limpio) {
+  if (!previo || !previo.nombreClave
+    || previo.nombreClave === limpio.nombreClave) {
+    return [];
+  }
+  const costos = await costosDelModelo(previo.nombreClave);
+  if (!costos.length) return [];
+  const pregunta = textoRenombrarCostos(
+    costos.length,
+    previo.nombre,
+    limpio.nombre
+  );
+  return window.confirm(pregunta) ? costos : [];
+}
+
+/**
+ * @param {object[]} costos
+ * @param {object} modelo ya guardado
+ * @returns {Promise<void>}
+ */
+async function renombrarSusCostos(costos, modelo) {
+  try {
+    const n = await renombrarCostos(costos, modelo.nombre, autor);
+    alRenombrar();
+    avisar(textoCostosRenombrados(n), "ok");
+  } catch (error) {
+    registrarError(error, "modelo.renombrarCostos");
+    alRenombrar();
+    avisar(MT.costosNoRenombrados, "error");
   }
 }
 

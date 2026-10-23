@@ -2,19 +2,22 @@
  * Propósito: Catálogo de modelos en tarjetas, con filtros.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-02
- * Dependencias: constantes, errores, hw-catalogo, logger,
- *   modelo-pdf, modelo-repositorio, modelo-textos,
+ * Dependencias: constantes, errores, espec-listado, hw-catalogo,
+ *   logger, modelo-costos, modelo-pdf, modelo-repositorio,
+ *   modelo-textos,
  *   planilla-importar, tipos-equipo, ui
  */
 
 import { MSG } from "./constantes.js";
 import { mensajeError } from "./errores.js";
+import { invalidarEspecs } from "./espec-listado.js";
 import {
   ESTADOS_MODELO,
   TIPOS_MODELO,
   etiquetaDe
 } from "./hw-catalogo.js";
 import { registrarError } from "./logger.js";
+import { costosDelModelo } from "./modelo-costos.js";
 import {
   descargarCatalogoModelosPdf,
   descargarModeloPdf
@@ -23,6 +26,7 @@ import { eliminarModelo, listarModelos } from "./modelo-repositorio.js";
 import {
   MT,
   textoClientesMas,
+  textoEliminarConCostos,
   textoModelosImportados
 } from "./modelo-textos.js";
 import { importarModelos } from "./planilla-importar.js";
@@ -293,8 +297,13 @@ async function ejecutar(accion, id) {
     return;
   }
   if (accion === "eliminar") {
-    if (!window.confirm(MT.confirmarEliminar)) return;
+    const costos = await costosDelModelo(modelo.nombreClave);
+    const aviso = costos.length
+      ? textoEliminarConCostos(costos.length)
+      : MT.confirmarEliminar;
+    if (!window.confirm(aviso)) return;
     await eliminarModelo(id);
+    invalidarEspecs();
     cache = await listarModelos();
     pintar();
     avisar(MT.eliminado, "ok");

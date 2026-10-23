@@ -264,7 +264,7 @@ function asegurarUi() {
   iniciarModelo(() => {
     invalidarModelos();
     invalidarEspecs();
-  });
+  }, () => invalidarCostos());
   iniciarListadoModelos();
   iniciarEspec(() => invalidarEspecs());
   iniciarListadoEspecs();

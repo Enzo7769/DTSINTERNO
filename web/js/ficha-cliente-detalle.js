@@ -3,10 +3,16 @@
  *   plazo y el mismo formulario de configuración.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-14
- * Dependencias: fechas.js, ficha-cliente-*.js, ficha-cliente-pdf.js,
+ * Dependencias: cambios-pendientes.js, fechas.js,
+ *   ficha-cliente-*.js, ficha-cliente-pdf.js,
  *   ficha-vista.js, logger.js, ui.js
  */
 
+import {
+  cambiosGuardados,
+  confirmarDescarte,
+  vigilarCambios
+} from "./cambios-pendientes.js";
 import { formatearFechaHora } from "./fechas.js";
 import { abrirPdfEnvio } from "./ficha-cliente-pdf.js";
 import { invalidarEnvios } from "./ficha-cliente-listado.js";
@@ -40,6 +46,11 @@ const TXT = {
   plazoOk: "Plazo actualizado. Si estaba finalizada, "
     + "el cliente ya puede volver a editar.",
   copiado: "Enlace copiado.",
+  noCopiado: "No se pudo copiar. Selecciona el enlace y cópialo a mano.",
+  diasInvalidos: "Escribe entre 1 y 90 días.",
+  confirmarReabrir:
+    "Esta ficha está finalizada. Al ampliar el plazo se reabre y el "
+    + "cliente podrá volver a editarla. ¿Continuar?",
   pdf: "Descargar PDF",
   pdfFallo: "No se pudo descargar el PDF.",
   fallo: "No se pudo guardar.",
@@ -81,13 +92,18 @@ export function definirAutorDetalleEnvio(sesion) {
 export function iniciarDetalleEnvio() {
   if (listo) return;
   listo = true;
+  vigilarCambios("vista-ficha-envio");
   porId("btn-envio-volver").addEventListener("click", () => {
     location.hash = "#/fichas-envio";
   });
   porId("btn-envio-copiar").addEventListener("click", () => {
     if (!actual) return;
-    navigator.clipboard.writeText(urlPublica(actual.token));
-    avisar(TXT.copiado, "ok");
+    navigator.clipboard.writeText(urlPublica(actual.token))
+      .then(() => avisar(TXT.copiado, "ok"))
+      .catch(() => {
+        porId("envio-detalle-enlace").select();
+        avisar(TXT.noCopiado, "aviso");
+      });
   });
   porId("btn-envio-guardar").addEventListener("click", () => {
     guardar().catch((error) => {
@@ -124,11 +140,14 @@ export async function mostrarDetalleEnvio(id) {
   document.title = TXT.titulo;
   mostrarVista("vista-ficha-envio");
   actual = await obtenerEnvio(id);
+  porId("envio-detalle-contenido").hidden = !actual;
   if (!actual) {
+    porId("envio-meta-licitacion").textContent = TXT.titulo;
     porId("envio-detalle-aviso").textContent = TXT.noHay;
-    porId("btn-envio-pdf").hidden = true;
+    porId("envio-ficha-cuerpo").replaceChildren();
     return;
   }
+  cambiosGuardados("vista-ficha-envio");
   pintarMeta();
   pintarHistorial();
   montarFichaEn(porId("envio-ficha-cuerpo"), actual, {
@@ -196,6 +215,7 @@ async function guardar() {
     autor || { uid: "", email: "" }
   );
   actual = fresco;
+  cambiosGuardados("vista-ficha-envio");
   pintarMeta();
   pintarHistorial();
   avisar(TXT.guardada, "ok");
@@ -207,7 +227,15 @@ async function guardar() {
 async function sumarDias() {
   if (!actual) return;
   const extra = Number(porId("envio-extra-dias").value);
-  if (!Number.isFinite(extra) || extra <= 0) return;
+  if (!Number.isInteger(extra) || extra < 1 || extra > 90) {
+    avisar(TXT.diasInvalidos, "aviso");
+    return;
+  }
+  if (actual.estado === "finalizado"
+    && !window.confirm(TXT.confirmarReabrir)) {
+    return;
+  }
+  if (!confirmarDescarte("vista-ficha-envio")) return;
   const ms = actual.plazoHasta && actual.plazoHasta.toMillis
     ? actual.plazoHasta.toMillis()
     : Number(actual.plazoHasta) || Date.now();
