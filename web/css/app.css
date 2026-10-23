@@ -4373,3 +4373,94 @@ tr.fila-anterior td.fuerte { font-weight: 600; }
   .rc-region { grid-template-columns: 1fr auto; }
   .rc-region-pista { grid-column: 1 / -1; grid-row: 2; }
 }
+
+/* Acta de recepción impresa. */
+.rl-firmas { display: none; }
+
+@media print {
+  body.imprimir-acta { background: #ffffff; }
+  body.imprimir-acta .sidebar,
+  body.imprimir-acta #aviso-demo,
+  body.imprimir-acta .encabezado .grupo-botones,
+  body.imprimir-acta .barra-acciones,
+  body.imprimir-acta #btn-rl-agregar,
+  body.imprimir-acta .rl-pie,
+  body.imprimir-acta .rl-todo-ok,
+  body.imprimir-acta .rl-pasos .rl-paso:not(.actual) {
+    display: none !important;
+  }
+  body.imprimir-acta .app { display: block; }
+  body.imprimir-acta .contenido { padding: 0; }
+  body.imprimir-acta .rl-grid,
+  body.imprimir-acta .rl-datos {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  body.imprimir-acta .rl-item {
+    grid-template-columns: 1fr auto !important;
+    padding: 2px 6px;
+    break-inside: avoid;
+  }
+  body.imprimir-acta .rl-op input:not(:checked) + span { display: none; }
+  body.imprimir-acta .rl-item small { display: none; }
+  body.imprimir-acta .rl-equipo { break-inside: auto; }
+  body.imprimir-acta .tarjeta { padding: 10px 12px; margin-bottom: 8px; }
+  body.imprimir-acta .campo { gap: 2px; font-size: 11px; }
+  body.imprimir-acta .campo input,
+  body.imprimir-acta .campo select,
+  body.imprimir-acta .campo textarea {
+    padding: 2px 0;
+    border: 0;
+    border-bottom: 1px solid #c9d6dd;
+    border-radius: 0;
+    background: transparent;
+    appearance: none;
+    font-size: 12px;
+    min-height: 0;
+  }
+  body.imprimir-acta .rl-cuerpo { gap: 6px; padding: 8px 10px; }
+  body.imprimir-acta .rl-grupo {
+    grid-template-columns: 1fr 1fr;
+    gap: 3px 8px;
+  }
+  body.imprimir-acta .rl-grupo legend { margin-bottom: 0; font-size: 10px; }
+  body.imprimir-acta .rl-item strong { font-size: 11px; }
+  body.imprimir-acta .rl-op span {
+    min-width: 0;
+    min-height: 0;
+    padding: 1px 6px;
+    font-size: 10px;
+  }
+  body.imprimir-acta .rl-nota {
+    grid-column: 1 / -1;
+    min-height: 0;
+    padding: 1px 0;
+    font-size: 11px;
+    border: 0;
+  }
+  body.imprimir-acta .rl-pasos { display: block; }
+  body.imprimir-acta .rl-paso {
+    min-height: 0;
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+  body.imprimir-acta .rl-revision-cabeza h3 { font-size: 13px; }
+  body.imprimir-acta h1 { font-size: 22px; }
+  body.imprimir-acta .rl-firmas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 48px;
+    font-size: 12px;
+    text-align: center;
+  }
+  body.imprimir-acta .rl-firmas span {
+    display: block;
+    height: 40px;
+    border-bottom: 1px solid #000000;
+    margin-bottom: 6px;
+  }
+  body.imprimir-acta * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

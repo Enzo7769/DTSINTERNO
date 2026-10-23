@@ -696,6 +696,7 @@ function iniciarLocal() {
     guardar().catch((error) => fallo(error, "recepcion.guardar"));
   });
   porId("btn-rl-eliminar").addEventListener("click", pedirEliminar);
+  porId("btn-rl-imprimir").addEventListener("click", imprimirActa);
   const zona = porId("rl-equipos");
   zona.addEventListener("click", alPulsarEquipo);
   zona.addEventListener("change", (e) => {
@@ -1147,6 +1148,24 @@ async function guardar() {
     TXT.volver,
     "#/recepcion"
   );
+}
+
+/**
+ * Acta para firmar al recibir: todos los equipos desplegados, sin
+ * menú ni botones.
+ * @returns {void}
+ */
+function imprimirActa() {
+  porId("rl-equipos").querySelectorAll("details").forEach((d) => {
+    d.open = true;
+  });
+  document.body.classList.add("imprimir-acta");
+  const quitar = () => {
+    document.body.classList.remove("imprimir-acta");
+    window.removeEventListener("afterprint", quitar);
+  };
+  window.addEventListener("afterprint", quitar);
+  window.print();
 }
 
 /**
