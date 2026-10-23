@@ -103,8 +103,8 @@ const TXT = {
     "1 país, 2 oficinas, 3 UDT y 4 trámites en 1.1 "
     + "Config. menú.",
   notaSectores:
-    "(PUEDE SER UN (1) SECTOR POR TÓTEM Y VARIOS "
-    + "TÓTEM POR UN (1) SECTOR)",
+    "Puede haber un sector por tótem o varios tótems en un "
+    + "mismo sector.",
   pasoDatos: "1. Datos de config.",
   pasoMenu: "1.1 Config. menú",
   pasoRed: "2. Datos de red",
@@ -624,7 +624,11 @@ function bloque(numero, titulo, ayuda) {
   const nodo = document.createElement("section");
   nodo.className = "tarjeta ficha-bloque";
   const h2 = document.createElement("h2");
-  h2.textContent = `${numero}. ${titulo}`;
+  h2.className = "ficha-bloque-titulo";
+  const num = document.createElement("span");
+  num.className = "ficha-num";
+  num.textContent = numero;
+  h2.append(num, document.createTextNode(titulo));
   nodo.append(h2);
   if (ayuda) {
     const p = document.createElement("p");
@@ -707,6 +711,14 @@ function campoUsuario(valor, ruta) {
   const p = document.createElement("p");
   p.className = "ayuda";
   p.textContent = TXT.usuarioSinEspacio;
+  // El aviso aparece solo cuando hace falta, no en cada fila.
+  const revisar = () => {
+    const conEspacio = /\s/.test(input.value);
+    p.hidden = !conEspacio;
+    input.classList.toggle("entrada-invalida", conEspacio);
+  };
+  revisar();
+  input.addEventListener("input", revisar);
   caja.append(input, p);
   return caja;
 }
@@ -739,6 +751,8 @@ function campoClave(valor, ruta) {
     fill.dataset.nivel = n.clave;
     fill.style.width = n.pct;
     et.textContent = n.texto;
+    // Los requisitos se muestran mientras la clave no es segura.
+    req.hidden = n.clave === "fuerte" || n.clave === "muy";
   };
   fill.className = "ficha-clave-nivel";
   barra.append(fill);
@@ -836,7 +850,8 @@ function botonAccion(texto, accion) {
   boton.className = accion.startsWith("quitar")
     ? "boton boton-secundario ficha-quitar"
     : "boton boton-secundario";
-  boton.textContent = texto;
+  if (accion.startsWith("sumar")) boton.classList.add("ficha-agregar");
+  boton.textContent = accion.startsWith("sumar") ? `+ ${texto}` : texto;
   boton.dataset.accion = accion;
   return boton;
 }
@@ -1150,35 +1165,38 @@ function parametros(ficha) {
     "Parámetros de tipos de atención",
     TXT.notaSalud
   );
-  nodo.append(parametro(
+  const grilla = document.createElement("div");
+  grilla.className = "ficha-param-grid";
+  nodo.append(grilla);
+  grilla.append(parametro(
     "IdCentro",
     "Código del establecimiento. Ejemplo: 10-340.",
     ficha.idCentro,
     "idCentro",
     40
   ));
-  nodo.append(parametro(
-    "Mensaje de retiro atrasado",
-    "Se muestra si pasan los minutos de tolerancia.",
-    ficha.msgAtrasado,
-    "msgAtrasado",
-    200
-  ));
-  nodo.append(parametro(
+  grilla.append(parametro(
     "Minutos de atraso tolerados",
     "Minutos después de la hora en que aún se registra.",
     ficha.minutosAtraso,
     "minutosAtraso",
     4
   ));
-  nodo.append(parametro(
+  grilla.append(parametro(
+    "Mensaje de retiro atrasado",
+    "Se muestra si pasan los minutos de tolerancia.",
+    ficha.msgAtrasado,
+    "msgAtrasado",
+    200
+  ));
+  grilla.append(parametro(
     "Minutos de adelanto tolerados",
     "Minutos antes de la hora en que ya se puede llegar.",
     ficha.minutosAdelanto,
     "minutosAdelanto",
     4
   ));
-  nodo.append(parametro(
+  grilla.append(parametro(
     "Mensaje de llegada anticipada",
     "Se muestra si llega antes del tiempo permitido.",
     ficha.msgTemprano,

@@ -69,14 +69,19 @@ export function dibujarConfigMenu(ficha) {
     caja.append(vacio());
     return caja;
   }
-  caja.append(
-    vistas(ficha.menu, i),
+  // Simulación a la izquierda; teclado y menú a la derecha, para
+  // ver el cambio mientras se edita.
+  const editor = document.createElement("div");
+  editor.className = "ficha-menu-editor";
+  editor.append(
     teclado(ficha.menu),
-    menuTotem(menus[i], i, ficha)
+    menuTotem(menus[i], i, ficha),
+    acciones([[TXT.guardarTotem, `menu:guardarTotem:${i}`]])
   );
-  caja.append(acciones([
-    [TXT.guardarTotem, `menu:guardarTotem:${i}`]
-  ]));
+  const dos = document.createElement("div");
+  dos.className = "ficha-menu-dos";
+  dos.append(vistas(ficha.menu, i), editor);
+  caja.append(dos);
   return caja;
 }
 
@@ -471,12 +476,14 @@ function boton(texto, accion) {
   const primario = accion.includes("guardarTotem");
   const nodo = document.createElement("button");
   nodo.type = "button";
+  const sumar = /:sumar/.test(accion);
   nodo.className = primario
     ? "boton"
     : accion.includes("quitar")
       ? "boton boton-secundario ficha-quitar"
       : "boton boton-secundario";
-  nodo.textContent = texto;
+  if (sumar) nodo.classList.add("ficha-agregar");
+  nodo.textContent = sumar ? `+ ${texto}` : texto;
   nodo.dataset.accion = accion;
   return nodo;
 }

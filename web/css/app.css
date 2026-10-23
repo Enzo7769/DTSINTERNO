@@ -3042,3 +3042,205 @@ td.acciones .boton {
   .encabezado > .grupo-botones,
   .encabezado > .encabezado-acciones { flex-wrap: wrap; }
 }
+
+/* ==========================================================
+   Ficha de configuración: orden visual
+   ========================================================== */
+
+.ficha-bloque { padding: 18px 20px 20px; }
+
+.ficha-bloque-titulo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.ficha-num {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--azul-claro);
+  color: var(--azul);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ficha-bloque > .ficha-bloque-titulo + .ayuda { margin: 0 0 12px 38px; }
+
+.ficha-bloque > h3 + .ayuda { margin: -4px 0 10px; font-size: 14px; }
+
+.ficha-bloque h3 {
+  margin: 18px 0 8px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--linea);
+  font-size: 15px;
+  color: var(--azul-profundo);
+}
+
+/* Listas y campos con el mismo alto, borde y radio. */
+.ficha-tabla select,
+.ficha-bloque .campo select,
+.ficha-bloque select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--linea);
+  border-radius: 10px;
+  background: var(--blanco);
+  color: var(--tinta);
+  font: inherit;
+}
+
+.ficha-tabla input:focus,
+.ficha-tabla select:focus,
+.ficha-bloque select:focus {
+  outline: 2px solid var(--azul);
+  border-color: var(--azul);
+}
+
+/* Tablas de la ficha. */
+.ficha-tabla th {
+  padding: 8px 10px;
+  background: #f6f9fb;
+  white-space: nowrap;
+}
+
+.ficha-tabla td { padding: 8px 10px; vertical-align: top; }
+
+.ficha-tabla td:first-child { white-space: nowrap; font-weight: 700; }
+
+.ficha-tabla td:first-child input { min-width: 96px; font-weight: 600; }
+
+.ficha-tabla td:first-child select { font-weight: 400; }
+
+.ficha-tabla select { min-width: 150px; }
+
+/* Horario de la UDT en una sola línea: entrada y salida. */
+.ficha-tabla .ficha-horario {
+  flex-direction: row;
+  gap: 8px;
+  min-width: 250px;
+}
+
+.ficha-tabla .ficha-hora input[type="time"] { min-width: 118px; }
+
+.ficha-tabla td:last-child { width: 1%; text-align: right; }
+
+.ficha-tabla tbody tr:hover td { background: #fbfdfe; }
+
+/* Agregar: discreto, con borde punteado. Quitar: compacto. */
+.boton.ficha-agregar {
+  padding: 8px 14px;
+  border: 1px dashed #9fc3d3;
+  background: var(--blanco);
+  color: var(--azul);
+  font-size: 14px;
+}
+
+.boton.ficha-agregar:hover { background: var(--azul-claro); }
+
+.boton.ficha-quitar {
+  padding: 6px 10px;
+  border-color: #f0c8c8;
+  font-size: 13px;
+}
+
+.boton.ficha-quitar:hover { background: var(--mal-fondo); }
+
+/* Cada sector (UAC, usuarios) como un subgrupo marcado. */
+.ficha-grupo-cabeza {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: var(--papel);
+  border: 1px solid var(--linea);
+  border-radius: 12px;
+  align-items: center;
+}
+
+.ficha-grupo-cabeza .ficha-subtitulo { margin-top: 0; }
+
+/* Parámetros: minutos junto a su mensaje. */
+.ficha-param-grid {
+  display: grid;
+  grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
+  gap: 14px 16px;
+}
+
+.ficha-param-grid > .campo:first-child { grid-column: 1 / -1; max-width: 280px; }
+
+.ficha-param-grid .campo { gap: 4px; }
+
+.ficha-param-grid .campo > span { color: var(--tinta); font-weight: 600; }
+
+.ficha-clave-req[hidden],
+.ficha-usuario-caja .ayuda[hidden] { display: none; }
+
+.ficha-usuario-caja .ayuda { color: var(--mal); }
+
+.ficha-nota {
+  font-weight: 600;
+  border: 1px solid #f3ddb0;
+}
+
+@media (max-width: 720px) {
+  .ficha-param-grid { grid-template-columns: 1fr; }
+  .ficha-bloque > .ficha-bloque-titulo + .ayuda { margin-left: 0; }
+}
+
+.ficha-tabla select { min-width: 120px; }
+
+.ficha-tabla .ficha-ip input { width: 2.8em; min-width: 2.8em; }
+
+.ficha-tabla .ficha-hora input[type="time"] { min-width: 104px; }
+
+.ficha-tramites-acc {
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+/* 1.1 Config. menú: simulación fija a la izquierda, editor a la derecha. */
+.ficha-menu-dos {
+  display: grid;
+  grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.ficha-menu-dos > .ficha-bloque {
+  position: sticky;
+  top: 12px;
+}
+
+.ficha-menu-dos .sim-grilla-una { max-width: none; }
+
+.ficha-menu-editor > .ficha-acciones {
+  position: sticky;
+  bottom: 0;
+  padding: 10px 0;
+  background: rgba(243, 246, 248, 0.96);
+}
+
+.ficha-menu-tramite {
+  border-radius: 12px;
+}
+
+.ficha-tabla td:first-child input { min-width: 84px; }
+
+.ficha-tabla td { padding: 8px; }
+
+@media (max-width: 1100px) {
+  .ficha-menu-dos { grid-template-columns: 1fr; }
+  .ficha-menu-dos > .ficha-bloque { position: static; }
+}
+
+.ficha-red-card h3 {
+  margin: 0 0 10px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.ficha-red-card { background: #fbfdfe; }
