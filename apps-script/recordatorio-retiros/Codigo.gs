@@ -122,8 +122,13 @@ function leerLocales() {
     });
     const codigo = resp.getResponseCode();
     if (codigo !== 200) {
-      throw new Error(`Firestore respondió ${codigo}. Revisa que esta `
-        + "cuenta tenga acceso al proyecto de Firebase. Detalle: "
+      const ayuda = codigo === 403
+        ? `La cuenta ${Session.getEffectiveUser().getEmail()} no tiene `
+          + `permiso para leer Firestore en «${CONFIG.proyecto}». Dale el `
+          + "rol «Visualizador de Cloud Datastore» en Google Cloud → IAM "
+          + "(ver LEEME.md)."
+        : "Revisa CONFIG.proyecto y que Firestore exista.";
+      throw new Error(`Firestore respondió ${codigo}. ${ayuda} Detalle: `
         + resp.getContentText().slice(0, 300));
     }
     const datos = JSON.parse(resp.getContentText());

@@ -66,9 +66,21 @@ Hazlo en un computador; desde el celular el editor es incómodo.
 
 ## Si algo falla
 
-- **«Firestore respondió 403»:** la cuenta no tiene acceso al proyecto
-  de Firebase. Usa la cuenta dueña o pide que te agreguen en la consola
-  de Firebase → Configuración del proyecto → Usuarios y permisos.
+- **«Firestore respondió 403» / «Missing or insufficient
+  permissions»:** la cuenta que ejecuta el script no tiene permiso en el
+  proyecto de Google Cloud de Firebase. (Las reglas de Firestore no
+  tienen que ver: el script entra con permisos de Google Cloud.)
+  Para darle solo permiso de lectura:
+  1. Con la cuenta dueña del proyecto, abre
+     <https://console.cloud.google.com/iam-admin/iam?project=controldtshardware>.
+  2. Toca **Otorgar acceso**. En «Principales nuevas» escribe el correo
+     de la cuenta del script (la de la letra arriba a la derecha en
+     Apps Script).
+  3. En «Rol» busca y elige **Visualizador de Cloud Datastore**
+     (*Cloud Datastore Viewer*). Guarda.
+  4. Espera uno o dos minutos y vuelve a ejecutar `vistaPrevia`.
+
+  Otra opción: instalar el script con la cuenta dueña del proyecto.
 - **«Firestore respondió 404»:** revisa `proyecto` en `CONFIG`
   (`projectId` en `web/js/config.js`).
 - **No llega nada:** si no hay retiros pendientes no se envía correo.
