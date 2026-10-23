@@ -32,7 +32,9 @@ import {
 import {
   avance,
   avancePorRegion,
+  DIAS_AVISO_RETIRO,
   claveCodigo,
+  diasEntre,
   etapaLocal,
   leerPlanillaLocales,
   normalizarLocal,
@@ -40,6 +42,7 @@ import {
   nuevoUid,
   pendientesRevision,
   resultadoEquipo,
+  retirosPorFecha,
   validarLocal
 } from "./recepcion-datos.js";
 import {
@@ -239,6 +242,7 @@ function pintarPanel() {
     ? `Cifras de ${etiquetaDeLista(REGIONES, region)}`
     : "";
   pintarKpis(avance(deRegion));
+  pintarRetiros(retirosPorFecha(deRegion, hoyIso()));
   pintarRegiones(lista, region);
   pintarNovedades(novedades(deRegion, ITEMS_RECEPCION));
   pintarTablaLocales();
@@ -261,6 +265,79 @@ function pintarKpis(a) {
     kpi(TXT.kpiNovedades, String(a.danados + a.incompletos),
       `${a.incompletos} incompletos · ${a.danados} con daños`)
   );
+}
+
+/** Columnas del aviso de retiros, de lo más a lo menos urgente. */
+const GRUPOS_RETIRO = [
+  { id: "atrasados", titulo: "Atrasados", icono: "!",
+    vacio: "Ningún retiro atrasado." },
+  { id: "hoy", titulo: "Hoy", icono: "●", vacio: "Ningún retiro para hoy." },
+  { id: "proximos", titulo: `Próximos ${DIAS_AVISO_RETIRO} días`,
+    icono: "›", vacio: "Ningún retiro en los próximos días." }
+];
+
+/**
+ * @param {number} n
+ * @returns {string}
+ */
+function textoDias(n) {
+  return textoConteo(n, "día", "días");
+}
+
+/**
+ * Atrasados, hoy y próximos: cada local enlaza a su ficha.
+ * @param {{atrasados: object[], hoy: object[], proximos: object[]}} r
+ * @returns {void}
+ */
+function pintarRetiros(r) {
+  porId("rc-retiros").replaceChildren(...GRUPOS_RETIRO.map((grupo) => {
+    const filas = r[grupo.id];
+    const caja = document.createElement("div");
+    caja.className = `rc-retiro-col rc-retiro-${grupo.id}`;
+    const h = document.createElement("h3");
+    const icono = document.createElement("span");
+    icono.className = "rc-retiro-icono";
+    icono.setAttribute("aria-hidden", "true");
+    icono.textContent = grupo.icono;
+    const n = document.createElement("span");
+    n.className = "rc-retiro-n";
+    n.textContent = String(filas.length);
+    h.append(icono, document.createTextNode(grupo.titulo), n);
+    caja.append(h);
+    if (!filas.length) {
+      const p = document.createElement("p");
+      p.className = "ayuda";
+      p.textContent = grupo.vacio;
+      caja.append(p);
+      return caja;
+    }
+    const ul = document.createElement("ul");
+    filas.forEach(({ local, dias, pendientes }) => {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = `#/recepcion-local?id=${encodeURIComponent(local.id)}`;
+      const titulo = document.createElement("strong");
+      titulo.textContent = `${local.codigo}${local.nombre
+        ? ` · ${local.nombre}` : ""}`;
+      const cuando = document.createElement("span");
+      cuando.className = "rc-retiro-cuando";
+      cuando.textContent = grupo.id === "atrasados"
+        ? `Atrasado ${textoDias(dias)}`
+        : grupo.id === "hoy" ? "Retiro hoy" : `En ${textoDias(dias)}`;
+      const detalle = document.createElement("small");
+      detalle.textContent = [
+        formatearFecha(local.retiroProgramado),
+        `${textoConteo(pendientes, "equipo", "equipos")} por retirar`,
+        local.comuna,
+        local.transportista
+      ].filter(Boolean).join(" · ");
+      a.append(titulo, cuando, detalle);
+      li.append(a);
+      ul.append(li);
+    });
+    caja.append(ul);
+    return caja;
+  }));
 }
 
 /**
@@ -457,9 +534,20 @@ function pintarTablaLocales() {
     });
     celda("Etapa", "").append(pillEtapa(etapa));
     celda("Revisión", "nowrap").append(resumenRevision(local));
-    celda("Retiro", "nowrap").textContent = local.retiroProgramado
+    const tdRetiro = celda("Retiro", "nowrap");
+    tdRetiro.textContent = local.retiroProgramado
       ? formatearFecha(local.retiroProgramado)
       : "—";
+    const atraso = local.retiroProgramado
+      && local.equipos.some((e) => e.etapa === "pendiente")
+      ? diasEntre(local.retiroProgramado, hoyIso())
+      : 0;
+    if (atraso > 0) {
+      const marca = document.createElement("span");
+      marca.className = "rc-atraso";
+      marca.textContent = `Atrasado ${textoDias(atraso)}`;
+      tdRetiro.append(marca);
+    }
     const a = document.createElement("a");
     a.className = "boton boton-secundario";
     a.href = destino;

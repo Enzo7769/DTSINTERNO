@@ -227,6 +227,14 @@ contrato (por ejemplo, Walmart Líder, locales LID01, LID02…).
   despacho, notas y sus equipos (hasta 20). Reglas en
   `firestore.rules` (`localRecepcionValido`); el código no se repite
   dentro de un contrato.
+- **Retiros programados:** el panel separa los locales con equipos
+  aún pendientes de retiro en Atrasados (con los días de atraso), Hoy
+  y Próximos 3 días (`DIAS_AVISO_RETIRO`), según su fecha de retiro
+  programado. La tabla de locales también marca los atrasados.
+- **Recordatorio diario por Gmail:** script gratuito de Google Apps
+  Script en `apps-script/recordatorio-retiros/` que cada mañana manda
+  por correo los retiros atrasados, de hoy y próximos. Instalación en
+  su `LEEME.md`.
 - **Etapas por equipo:** Pendiente de retiro → En tránsito → Recibido
   en bodega → Revisado. Al pasar a Recibido se proponen la fecha de
   hoy y quien recibe. La etapa del local es la de su equipo más

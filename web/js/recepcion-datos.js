@@ -291,6 +291,53 @@ export function avancePorRegion(locales) {
   }).filter((fila) => fila.locales > 0);
 }
 
+/** Días antes del retiro en que un local pasa a «próximos». */
+export const DIAS_AVISO_RETIRO = 3;
+
+/**
+ * Días entre dos fechas AAAA-MM-DD (positivo si «hasta» es después).
+ * @param {string} desde
+ * @param {string} hasta
+ * @returns {number}
+ */
+export function diasEntre(desde, hasta) {
+  const ms = Date.parse(`${hasta}T00:00:00Z`)
+    - Date.parse(`${desde}T00:00:00Z`);
+  return Math.round(ms / 86400000);
+}
+
+/**
+ * Retiros que vencen: locales con fecha de retiro programada y
+ * equipos que siguen pendientes de retiro (los que ya salieron no
+ * cuentan).
+ * @param {object[]} locales
+ * @param {string} hoy AAAA-MM-DD
+ * @param {number} [dias] anticipación de «próximos»
+ * @returns {{atrasados: object[], hoy: object[], proximos: object[]}}
+ *   cada fila: {local, dias, pendientes}; atrasados de más a menos
+ *   días, próximos del más cercano al más lejano
+ */
+export function retirosPorFecha(locales, hoy, dias = DIAS_AVISO_RETIRO) {
+  const salida = { atrasados: [], hoy: [], proximos: [] };
+  (locales || []).forEach((local) => {
+    if (!local.retiroProgramado) return;
+    const pendientes = local.equipos
+      .filter((equipo) => equipo.etapa === "pendiente").length;
+    if (!pendientes) return;
+    const faltan = diasEntre(hoy, local.retiroProgramado);
+    const fila = { local, dias: Math.abs(faltan), pendientes };
+    if (faltan < 0) salida.atrasados.push(fila);
+    else if (faltan === 0) salida.hoy.push(fila);
+    else if (faltan <= dias) salida.proximos.push(fila);
+  });
+  const porCodigo = (a, b) => a.local.codigo.localeCompare(b.local.codigo,
+    "es", { numeric: true });
+  salida.atrasados.sort((a, b) => b.dias - a.dias || porCodigo(a, b));
+  salida.hoy.sort(porCodigo);
+  salida.proximos.sort((a, b) => a.dias - b.dias || porCodigo(a, b));
+  return salida;
+}
+
 /** Novedad que no es un componente: el equipo no enciende. */
 export const NOVEDAD_NO_ENCIENDE = {
   id: "_enciende",
