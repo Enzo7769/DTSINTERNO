@@ -283,6 +283,9 @@ service cloud.firestore {
         && d.numero == old.numero
         && d.actualizadoPor == "cliente"
         && d.estado in ["en_curso", "finalizado"]
+        && d.diff(old).affectedKeys().hasOnly(camposCliente())
+        && d.historial.size() >= old.historial.size()
+        && d.actualizadoEn == request.time
         && fichaClienteValida();
     }
 
@@ -296,8 +299,21 @@ service cloud.firestore {
         && auditoriaIntacta();
     }
 
+    // Lo que el cliente puede cambiar desde el enlace: sus respuestas,
+    // su nombre, el estado y una línea más de historial. El plazo, el
+    // token, la auditoría y el PDF los maneja solo el panel.
+    function camposCliente() {
+      return ["cliente", "sistema", "pais", "oficinas", "sectores",
+        "totems", "gruposModulo", "admins", "adminsSector", "ejecutivos",
+        "visores", "idCentro", "msgAtrasado", "minutosAtraso",
+        "minutosAdelanto", "msgTemprano", "equipos", "requisitos",
+        "menu", "red", "rellenadoPor", "estado", "historial",
+        "actualizadoEn", "actualizadoPor", "finalizadoEn"];
+    }
+
     match /fichasCliente/{id} {
-      allow get: if true;
+      // El enlace solo se lee mientras está vigente: guarda claves.
+      allow get: if esAdmin() || request.time < resource.data.plazoHasta;
       allow list, delete: if esAdmin();
       allow create: if esAdmin()
         && request.resource.data.plantilla == "ficha-cliente-v1"

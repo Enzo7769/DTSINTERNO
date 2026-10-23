@@ -136,3 +136,14 @@ export function avisar(texto, tipo) {
     nodo.hidden = true;
   }, 4200);
 }
+
+/**
+ * «1 costo», «14 costos». El plural se arma con «s» o se indica.
+ * @param {number} n
+ * @param {string} singular
+ * @param {string} [plural]
+ * @returns {string}
+ */
+export function textoConteo(n, singular, plural) {
+  return n === 1 ? `1 ${singular}` : `${n} ${plural || `${singular}s`}`;
+}

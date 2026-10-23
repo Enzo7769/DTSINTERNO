@@ -2,10 +2,14 @@
  * Propósito: Formulario de alta y edición del checklist.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-01
- * Dependencias: catalogo, constantes, fechas, firma, pdf,
+ * Dependencias: cambios-pendientes, catalogo, constantes, fechas, firma, pdf,
  *   repositorio, sanitizar, ui, validacion, logger
  */
 
+import {
+  cambiosGuardados,
+  vigilarCambios
+} from "./cambios-pendientes.js";
 import {
   SECCIONES,
   buscarItem,
@@ -69,6 +73,7 @@ let guardando = false;
  * @returns {void}
  */
 export function iniciarFormulario(alGuardar) {
+  vigilarCambios("vista-formulario");
   pintarTipo(porId("tipo-checklist"), GRUPO_CHECKLIST, "tipoEquipo");
   pintarSecciones();
   firmaTecnico = crearFirma(porId("canvas-tecnico"));
@@ -168,6 +173,7 @@ export async function mostrarNuevo(nombreTecnico) {
     porId("estado-rechazado").checked = false;
     actualizarResumen();
     mostrarVista("vista-formulario");
+    cambiosGuardados("vista-formulario");
   } catch (error) {
     registrarError(error, "mostrarNuevo");
     throw error;
@@ -219,6 +225,7 @@ export async function mostrarEdicion(id) {
     porId("estado-rechazado").checked = registro.estado === "rechazado";
     actualizarResumen();
     mostrarVista("vista-formulario");
+    cambiosGuardados("vista-formulario");
   } catch (error) {
     registrarError(error, "mostrarEdicion");
     throw error;
@@ -481,13 +488,8 @@ function leerExtras(item, activo) {
  * @returns {void}
  */
 function marcarSeccion(id, valor) {
-  const raiz = document.querySelector(`[data-seccion="${id}"]`);
-  if (!raiz) return;
-  raiz.querySelectorAll("[data-item]").forEach((nodo) => {
-    if (nodo.hidden) return;
-    fijarMarcaItem(nodo.dataset.item, valor ? "ok" : "");
-  });
-  actualizarResumen();
+  const seccion = SECCIONES.find((item) => item.id === id);
+  if (seccion) marcarItems(seccion.items, valor);
 }
 
 /**
@@ -495,11 +497,33 @@ function marcarSeccion(id, valor) {
  * @returns {void}
  */
 function marcarTodos(valor) {
-  document.querySelectorAll("[data-item]").forEach((nodo) => {
-    if (nodo.hidden) return;
-    fijarMarcaItem(nodo.dataset.item, valor ? "ok" : "");
+  marcarItems(SECCIONES.flatMap((seccion) => seccion.items), valor);
+}
+
+/**
+ * Marca OK lo que aplica al equipo. Las preguntas Sí/No (¿Tiene BAM?)
+ * las responde el técnico: marcar todo no las da por «Sí». Lo que
+ * depende de ellas se marca según lo respondido.
+ * @param {object[]} lista ítems del catálogo
+ * @param {boolean} valor
+ * @returns {void}
+ */
+function marcarItems(lista, valor) {
+  const tipo = leerTipo(GRUPO_CHECKLIST);
+  const items = leerItems();
+  const sinResponder = [];
+  lista.forEach((item) => {
+    if (!itemAplica(item, items, tipo)) return;
+    if (valor && item.aceptaNo) {
+      if (!leerMarca(item.id)) sinResponder.push(item.nombre);
+      return;
+    }
+    fijarMarcaItem(item.id, valor ? "ok" : "");
   });
   actualizarResumen();
+  if (sinResponder.length) {
+    avisar(`${MSG.responderPregunta} ${sinResponder.join(", ")}`, "aviso");
+  }
 }
 
 /**
@@ -611,9 +635,13 @@ async function guardar(conPdf) {
   const crudo = leerCrudo();
   if (!crudo) return false;
   const limpio = normalizarChecklist(crudo);
-  const revision = validarDatos(limpio);
+  const revision = validarDatos(limpio, crudo);
   pintarErrores(revision);
   if (!revision.valido) return false;
+  if (!porId("aviso-serie").hidden
+    && !window.confirm(MSG.confirmarSerieDuplicada)) {
+    return false;
+  }
   const eraNuevo = !registroActual;
   guardando = true;
   textoBotones(true);
@@ -624,6 +652,7 @@ async function guardar(conPdf) {
       autorForm
     );
     registroActual = fresco;
+    cambiosGuardados("vista-formulario");
     if (conPdf) await descargarPdf(fresco);
     abrirModal(fresco, eraNuevo);
     return true;

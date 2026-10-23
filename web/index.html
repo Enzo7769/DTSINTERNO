@@ -600,14 +600,121 @@
         </div>
       </section>
 
+      <section id="vista-costos-resumen" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Costos hardware</p>
+            <h1>Resumen de costos</h1>
+            <p class="ayuda">
+              Cotización vigente de cada modelo, expresada en dólares
+              con el tipo de cambio guardado en cada costo.
+            </p>
+            <p id="cr-emitido" class="ayuda"></p>
+          </div>
+          <div class="grupo-botones">
+            <button
+              id="btn-cr-csv"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Exportar CSV
+            </button>
+            <button
+              id="btn-cr-imprimir"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Imprimir o guardar PDF
+            </button>
+            <a class="boton" href="#/costos">Ver base de costos</a>
+          </div>
+        </header>
+        <form id="form-filtros-cr" class="filtros">
+          <label class="campo">
+            <span>Línea de producto</span>
+            <select id="cr-linea" data-sin-cambios>
+              <option value="">Todas</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Tipo de equipo</span>
+            <select id="cr-tipo" data-sin-cambios>
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <button
+            id="btn-cr-limpiar"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Limpiar filtros
+          </button>
+        </form>
+        <p id="cr-estado" class="estado-lista" hidden></p>
+        <div id="cr-contenido">
+          <div id="cr-kpis" class="kpis cr-kpis"></div>
+          <div class="cr-grid">
+            <section class="tarjeta cr-panel">
+              <h2>Costo por equipo, por modelo</h2>
+              <p class="ayuda">
+                Cotización vigente de cada modelo y línea, de mayor a
+                menor (US$).
+              </p>
+              <div id="cr-barras" class="cr-barras"></div>
+            </section>
+            <div class="cr-columna">
+              <section class="tarjeta cr-panel">
+                <h2>¿En qué se va el costo?</h2>
+                <p id="cr-comp-ayuda" class="ayuda"></p>
+                <div id="cr-composicion"></div>
+              </section>
+              <section class="tarjeta cr-panel">
+                <h2>Promedio por línea de producto</h2>
+                <p class="ayuda">Costo por equipo promedio (US$).</p>
+                <div id="cr-lineas" class="cr-barras"></div>
+              </section>
+            </div>
+          </div>
+          <section class="tarjeta cr-panel">
+            <div class="cabeza-seccion">
+              <h2>Requiere atención</h2>
+              <span id="cr-alertas-cuenta" class="pill"></span>
+            </div>
+            <div id="cr-alertas" class="cr-alertas"></div>
+          </section>
+          <section class="tarjeta cr-panel">
+            <h2>Detalle por modelo</h2>
+            <div class="tabla-wrap">
+              <table class="cr-tabla">
+                <thead>
+                  <tr>
+                    <th>Modelo</th>
+                    <th>Línea</th>
+                    <th>Tipo</th>
+                    <th class="derecha">Costo por equipo (US$)</th>
+                    <th class="derecha">Costo original</th>
+                    <th>Variación</th>
+                    <th>Actualizado</th>
+                    <th class="derecha">Cotizaciones</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="cr-cuerpo"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+        <div id="cr-tooltip" class="cr-tooltip" role="tooltip" hidden></div>
+      </section>
+
       <section id="vista-costos" class="vista" hidden>
         <header class="encabezado">
           <div>
             <p class="kicker">Costos hardware</p>
             <h1>Base de costos HW</h1>
             <p class="ayuda">
-              Costo actualizado por modelo, línea de producto y
-              cliente o configuración.
+              Lo que cuesta fabricar cada modelo, por línea de
+              producto. Abre un costo para ver su hoja de costeo.
             </p>
           </div>
           <div class="grupo-botones">
@@ -673,6 +780,7 @@
                 <th>Tipo</th>
                 <th>Modelo</th>
                 <th class="derecha">Costo</th>
+                <th>Variación</th>
                 <th>Actualizado</th>
                 <th>Acciones</th>
               </tr>
@@ -727,7 +835,12 @@
                 list="k-modelos-lista"
               >
               <datalist id="k-modelos-lista"></datalist>
-              <small id="k-modelo-ayuda" class="ayuda"></small>
+              <small class="ayuda modelo-ayuda">
+                <span id="k-modelo-ayuda"></span>
+                <a id="k-modelo-ficha" class="enlace" hidden>
+                  Ver ficha técnica
+                </a>
+              </small>
             </label>
             <div class="campo" data-campo="k-cliente-cotizacion">
               <label for="k-cliente-cotizacion">
@@ -832,13 +945,13 @@
                 autocomplete="off"
               >
             </label>
+            <label class="campo">
+              <span>Día de la cotización</span>
+              <input id="k-cambio-fecha" type="date">
+              <small id="k-cambio-ayuda" class="ayuda"></small>
+            </label>
             <label class="campo" data-campo="k-cambio-usd">
               <span>Dólar (CLP por 1 USD)</span>
-              <input
-                id="k-cambio-fecha"
-                type="date"
-                aria-label="Día de la cotización del dólar"
-              >
               <input
                 id="k-cambio-usd"
                 inputmode="decimal"
@@ -944,6 +1057,25 @@
           >
             Duplicar como costo nuevo
           </button>
+          <div
+            id="costo-barra-resumen"
+            class="barra-resumen"
+            aria-live="polite"
+          >
+            <span>
+              <small>Por equipo</small>
+              <strong id="costo-barra-equipo">—</strong>
+            </span>
+            <span>
+              <small id="costo-barra-lote-titulo">Lote</small>
+              <strong id="costo-barra-lote">—</strong>
+            </span>
+            <span>
+              <small>Componentes</small>
+              <strong id="costo-barra-items">0</strong>
+            </span>
+            <p id="costo-barra-aviso" class="barra-aviso" hidden></p>
+          </div>
         </div>
       </section>
 
@@ -958,7 +1090,11 @@
             </p>
           </div>
           <div class="encabezado-acciones">
-            <button id="btn-modelo-todo" class="boton" type="button">
+            <button
+              id="btn-modelo-todo"
+              class="boton boton-secundario"
+              type="button"
+            >
               Exportar PDF general
             </button>
             <button id="btn-modelo-nuevo" class="boton" type="button">
@@ -1009,13 +1145,22 @@
             <h1 id="modelo-titulo">Nuevo modelo</h1>
             <p id="modelo-meta" class="ayuda"></p>
           </div>
-          <button
-            id="btn-modelo-volver"
-            class="boton boton-secundario"
-            type="button"
-          >
-            Volver a modelos
-          </button>
+          <div class="grupo-botones">
+            <a
+              id="btn-modelo-ficha"
+              class="boton boton-secundario"
+              hidden
+            >
+              Editar ficha técnica
+            </a>
+            <button
+              id="btn-modelo-volver"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Volver a modelos
+            </button>
+          </div>
         </header>
         <div
           id="modelo-mensaje"
@@ -1107,10 +1252,15 @@
             <p class="kicker">Fichas de equipo</p>
             <h1>Especificaciones técnicas</h1>
             <p class="ayuda">
-              Ficha técnica y clientes de cada equipo.
+              Ficha técnica de cada modelo del catálogo. Pasa el mouse
+              por la foto para ver sus datos.
             </p>
           </div>
-          <button id="btn-espec-todo" class="boton" type="button">
+          <button
+            id="btn-espec-todo"
+            class="boton boton-secundario"
+            type="button"
+          >
             Exportar PDF general
           </button>
         </header>
@@ -1122,7 +1272,15 @@
             </select>
           </label>
           <label class="campo">
-            <span>Buscar modelo</span>
+            <span>Ficha</span>
+            <select id="ef-avance">
+              <option value="">Todas</option>
+              <option value="incompleta">Con datos pendientes</option>
+              <option value="completa">Completas</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Buscar modelo o cliente</span>
             <input id="ef-texto" type="search" maxlength="120">
           </label>
           <button
@@ -1152,14 +1310,43 @@
             <h1 id="espec-titulo">Especificaciones técnicas</h1>
             <p id="espec-meta" class="ayuda"></p>
           </div>
-          <button
-            id="btn-espec-volver"
-            class="boton boton-secundario"
-            type="button"
-          >
-            Volver a especificaciones
-          </button>
+          <div class="grupo-botones">
+            <a id="btn-espec-modelo" class="boton boton-secundario">
+              Editar datos del modelo
+            </a>
+            <button
+              id="btn-espec-volver"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Volver a especificaciones
+            </button>
+          </div>
         </header>
+        <section class="tarjeta espec-resumen">
+          <div class="espec-avance-caja">
+            <div class="espec-avance-texto">
+              <strong id="espec-avance-titulo"></strong>
+              <span id="espec-avance-detalle" class="ayuda"></span>
+            </div>
+            <div
+              id="espec-avance-barra"
+              class="avance-barra"
+              role="progressbar"
+              aria-valuemin="0"
+            ><span></span></div>
+          </div>
+          <dl class="espec-datos">
+            <div>
+              <dt>Clientes que tienen el equipo</dt>
+              <dd id="espec-clientes"></dd>
+            </div>
+            <div>
+              <dt>Costos registrados</dt>
+              <dd id="espec-costos"></dd>
+            </div>
+          </dl>
+        </section>
         <section class="tarjeta">
           <h2>Imagen referencial</h2>
           <div class="imagen-modelo">
@@ -1185,7 +1372,46 @@
         </section>
         <section class="tarjeta">
           <h2>Ficha técnica</h2>
+          <p class="ayuda espec-ayuda">
+            Escribe un dato por línea. Los campos vacíos no aparecen
+            en el PDF.
+          </p>
           <div id="e-ficha" class="ficha-grupos"></div>
+        </section>
+        <section class="tarjeta">
+          <div class="cabeza-seccion">
+            <div>
+              <h2>Costos de este modelo</h2>
+              <p class="ayuda">
+                Cotizaciones de la Base de costos HW con este mismo
+                nombre de modelo.
+              </p>
+            </div>
+            <a id="btn-espec-costo-nuevo" class="boton boton-secundario">
+              Nuevo costo de este modelo
+            </a>
+          </div>
+          <p id="espec-costos-vacio" class="ayuda" hidden>
+            Todavía no hay costos para este modelo.
+          </p>
+          <div class="tabla-wrap">
+            <table
+              id="espec-costos-tabla"
+              class="tabla-resumen tabla-costos-modelo"
+              hidden
+            >
+              <thead>
+                <tr>
+                  <th>N°</th>
+                  <th>Línea</th>
+                  <th class="derecha">Costo por equipo</th>
+                  <th>Actualizado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="espec-costos-cuerpo"></tbody>
+            </table>
+          </div>
         </section>
         <div class="barra-acciones">
           <button id="btn-espec-guardar" class="boton" type="button">
@@ -1213,35 +1439,60 @@
               Cada ficha se guarda con el nombre de su licitación.
             </p>
           </div>
-          <div class="ficha-guardar">
-            <label class="campo">
-              Licitación
-              <input id="ficha-licitacion" maxlength="160"
-                autocomplete="off">
-            </label>
-            <label class="campo">
-              Fichas guardadas
-              <select id="ficha-lista">
-                <option value="">Nueva ficha</option>
-              </select>
-            </label>
+        </header>
+        <div class="tarjeta barra-ficha">
+          <label class="campo">
+            <span>Abrir ficha</span>
+            <select id="ficha-lista" data-sin-cambios>
+              <option value="">Nueva ficha</option>
+            </select>
+          </label>
+          <label class="campo barra-ficha-nombre">
+            <span>Nombre de la licitación</span>
+            <input id="ficha-licitacion" maxlength="160"
+              autocomplete="off"
+              placeholder="Ej.: Licitación Municipalidad de Maipú">
+          </label>
+          <div class="grupo-botones">
             <button id="btn-ficha-guardar" class="boton" type="button">
               Guardar ficha
             </button>
+            <button
+              id="btn-ficha-copia"
+              class="boton boton-secundario"
+              type="button"
+              hidden
+            >
+              Duplicar
+            </button>
+            <button
+              id="btn-ficha-eliminar"
+              class="boton boton-peligro"
+              type="button"
+              hidden
+            >
+              Eliminar
+            </button>
           </div>
-        </header>
-        <p id="ficha-aviso" class="ayuda" role="status"></p>
+        </div>
+        <p id="ficha-aviso" class="ayuda ficha-aviso" role="status"></p>
         <div id="ficha-cuerpo"></div>
       </section>
 
       <section id="vista-fichas-envio" class="vista" hidden>
         <header class="encabezado">
           <div>
-            <p class="kicker">Configuración para el cliente</p>
-            <h1>Fichas de licitaciones</h1>
+            <p class="kicker">Ficha de configuración</p>
+            <h1>Enlaces para clientes</h1>
+            <p class="ayuda">
+              Genera un enlace para que el cliente complete la ficha de
+              su licitación. Sigue su avance y descarga el PDF aquí.
+            </p>
           </div>
         </header>
-        <form id="form-envio-nueva" class="filtros ficha-envio-form">
+        <form id="form-envio-nueva" class="tarjeta panel-nuevo">
+          <h2>Nuevo enlace</h2>
+          <div class="panel-nuevo-campos">
           <label class="campo">
             <span>Nombre de la licitación</span>
             <input id="envio-licitacion" maxlength="160"
@@ -1257,11 +1508,13 @@
             <input id="envio-limite" type="datetime-local">
           </label>
           <button id="btn-envio-generar" class="boton" type="button">
-            Generar ficha
+            Generar enlace
           </button>
+          </div>
           <label class="campo ficha-envio-link">
-            <span>Enlace para el cliente</span>
-            <input id="envio-enlace" readonly>
+            <span>Enlace generado (cópialo y envíalo al cliente)</span>
+            <input id="envio-enlace" readonly
+              placeholder="Aparece aquí al generar el enlace">
           </label>
         </form>
         <p id="conteo-envios" class="conteo"></p>
@@ -1299,6 +1552,7 @@
             Volver al listado
           </button>
         </header>
+        <div id="envio-detalle-contenido">
         <dl class="ficha-envio-meta">
           <div><dt>Quién rellenó</dt><dd id="envio-meta-quien">—</dd></div>
           <div><dt>Estado</dt><dd id="envio-meta-estado">—</dd></div>
@@ -1322,7 +1576,7 @@
           <label class="campo">
             Sumar días al plazo
             <input id="envio-extra-dias" type="number" min="1"
-              max="90" value="3">
+              max="90" value="3" data-sin-cambios>
           </label>
           <button id="btn-envio-plazo" class="boton boton-secundario"
             type="button">
@@ -1342,6 +1596,7 @@
         </div>
         <h2>Historial de modificaciones</h2>
         <ul id="envio-historial" class="ficha-envio-hist"></ul>
+        </div>
         <div id="envio-ficha-cuerpo"></div>
       </section>
     </div>

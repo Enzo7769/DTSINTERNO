@@ -68,6 +68,17 @@ export const MSG = {
   faltaIp: "Indica la IP del equipo. Ejemplo: 192.168.1.10.",
   faltaFechaInspeccion: "Indica una fecha de inspección válida.",
   faltaFechaSalida: "Indica una fecha de salida válida.",
+  macInvalida:
+    "La MAC no tiene un formato válido: son 6 pares de 0-9 o A-F. "
+    + "Ejemplo: AA:BB:CC:DD:EE:FF.",
+  ipInvalida:
+    "La IP no es válida: son 4 números de 0 a 255 separados por "
+    + "punto. Ejemplo: 192.168.1.10.",
+  inspeccionFutura: "La fecha de inspección no puede ser posterior a hoy.",
+  salidaAntes:
+    "La fecha de salida no puede ser anterior a la de inspección.",
+  confirmarSerieDuplicada:
+    "Ya hay otro checklist con este número de serie. ¿Guardar igual?",
   faltaEstado: "Selecciona el estado de evaluación.",
   noAprobado:
     "Solo puedes aprobar si todos los ítems están en OK.",
@@ -83,6 +94,7 @@ export const MSG = {
   noEncontrado: "Ese checklist ya no está disponible.",
   marcarSeccion: "Marcar sección",
   marcarTodo: "Marcar todo OK",
+  responderPregunta: "Falta que respondas Sí o No en:",
   limpiarMarcas: "Limpiar marcas",
   limpiarFirma: "Limpiar firma",
   guardar: "Guardar",
@@ -91,7 +103,6 @@ export const MSG = {
   volver: "Volver al listado",
   nuevo: "Nuevo checklist",
   editar: "Editar checklist",
-  registros: "registros",
   limpiarFiltros: "Limpiar filtros",
   abrir: "Abrir",
   eliminar: "Eliminar",
@@ -156,24 +167,35 @@ export const MODULOS = [
     habilitado: true
   },
   {
-    id: "costos-hardware",
-    etiqueta: "Costos hardware",
+    id: "equipos",
+    etiqueta: "Equipos y costos",
     habilitado: true,
     hijos: [
+      {
+        id: "resumen-costos",
+        etiqueta: "Resumen de costos",
+        rutas: ["/costos-resumen"],
+        destino: "#/costos-resumen"
+      },
+      {
+        id: "modelos-hw",
+        etiqueta: "Modelos",
+        rutas: ["/modelos", "/modelo"],
+        destino: "#/modelos"
+      },
+      {
+        id: "especificaciones-hw",
+        etiqueta: "Especificaciones técnicas",
+        rutas: ["/especificaciones", "/especificacion"],
+        destino: "#/especificaciones"
+      },
       {
         id: "base-costos",
         etiqueta: "Base de costos HW",
         rutas: ["/costos", "/costo"],
         destino: "#/costos"
-      },
+      }
     ]
-  },
-  {
-    id: "modelos-hw",
-    etiqueta: "Modelos",
-    rutas: ["/modelos", "/modelo"],
-    destino: "#/modelos",
-    habilitado: true
   },
   {
     id: "ficha-config",
@@ -182,24 +204,17 @@ export const MODULOS = [
     hijos: [
       {
         id: "ficha-editor",
-        etiqueta: "Editar ficha",
+        etiqueta: "Fichas guardadas",
         rutas: ["/ficha"],
         destino: "#/ficha"
       },
       {
         id: "fichas-envio",
-        etiqueta: "Fichas de licitaciones",
+        etiqueta: "Enlaces para clientes",
         rutas: ["/fichas-envio", "/ficha-envio"],
         destino: "#/fichas-envio"
       }
     ]
-  },
-  {
-    id: "especificaciones-hw",
-    etiqueta: "Especificaciones técnicas",
-    rutas: ["/especificaciones", "/especificacion"],
-    destino: "#/especificaciones",
-    habilitado: true
   },
   {
     id: "recepcion",

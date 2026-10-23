@@ -11,6 +11,7 @@
 
 import { MSG } from "./constantes.js";
 import { equivalenteDia } from "./costeo.js";
+import { variacion, vigentes } from "./costo-resumen.js";
 import { historialVisible } from "./costo-historial.js";
 import { descargarCostoPdf, descargarResumenPdf } from "./costo-pdf.js";
 import { eliminarCosto, listarCostos } from "./costo-repositorio.js";
@@ -36,7 +37,7 @@ import {
   etiquetaTipo,
   llenarFiltroTipo
 } from "./tipos-equipo.js";
-import { avisar, mostrarVista, porId } from "./ui.js";
+import { avisar, mostrarVista, porId, textoConteo } from "./ui.js";
 
 const ORDEN_TIPO = new Map(TIPOS_EQUIPO.map((tipo, i) => [tipo.id, i]));
 
@@ -48,6 +49,9 @@ let consultandoDolar = false;
 let pedidoDolar = 0;
 let autor = { uid: "", email: "" };
 let importando = false;
+/** Modelos con varias cotizaciones: la más reciente y las demás. */
+let idsVigentes = new Set();
+let idsAnteriores = new Set();
 
 /**
  * @returns {void}
@@ -166,11 +170,20 @@ function pintar() {
   pintarKpis(cache);
   const cuerpo = porId("costo-tabla");
   cuerpo.replaceChildren();
-  porId("costo-conteo").textContent = `${lista.length} ${CT.registros}`;
+  porId("costo-conteo").textContent = textoConteo(lista.length, "costo");
   porId("costo-vacio").hidden = cache.length > 0;
   const estado = porId("costo-estado");
   estado.hidden = lista.length > 0 || cache.length === 0;
   estado.textContent = CT.sinResultados;
+  idsVigentes = new Set(vigentes(cache)
+    .filter((v) => v.cotizaciones > 1)
+    .map((v) => v.registro.id));
+  idsAnteriores = new Set(cache
+    .filter((r) => !idsVigentes.has(r.id)
+      && vigentes(cache).some((v) => v.cotizaciones > 1
+        && v.registro.modeloClave === r.modeloClave
+        && v.registro.linea === r.linea))
+    .map((r) => r.id));
   lista.forEach((registro) => cuerpo.append(crearFila(registro)));
 }
 
@@ -316,6 +329,39 @@ function celdaCosto(registro) {
 }
 
 /**
+ * @param {string} texto
+ * @param {string} clase
+ * @returns {HTMLSpanElement}
+ */
+function marca(texto, clase) {
+  const span = document.createElement("span");
+  span.className = clase;
+  span.textContent = texto;
+  return span;
+}
+
+/**
+ * Cambio respecto de la cotización anterior del mismo costo.
+ * @param {object} registro
+ * @returns {HTMLTableCellElement}
+ */
+function celdaVariacion(registro) {
+  const td = document.createElement("td");
+  td.className = "nowrap";
+  const v = variacion(registro, cambioDia || {});
+  if (!v || v.pct === 0) {
+    td.textContent = v ? "= 0 %" : "—";
+    return td;
+  }
+  const span = document.createElement("span");
+  span.className = v.pct > 0 ? "cr-sube" : "cr-baja";
+  const pct = v.pct.toLocaleString("es-CL");
+  span.textContent = v.pct > 0 ? `▲ +${pct} %` : `▼ ${pct} %`;
+  td.append(span);
+  return td;
+}
+
+/**
  * @param {object} registro
  * @returns {HTMLTableRowElement}
  */
@@ -334,6 +380,15 @@ function crearFila(registro) {
       ? celdaCosto(registro)
       : celdaTexto(valor, clase));
   });
+  const modelo = tr.children[3];
+  if (idsVigentes.has(registro.id)) {
+    modelo.append(marca(CT.vigente, "pill pill-proceso marca-vigente"));
+  } else if (idsAnteriores.has(registro.id)) {
+    tr.classList.add("fila-anterior");
+    modelo.title = CT.anteriorTitulo;
+    modelo.append(marca(CT.anterior, "pill marca-vigente marca-anterior"));
+  }
+  tr.insertBefore(celdaVariacion(registro), tr.children[5]);
   const acciones = document.createElement("td");
   acciones.className = "acciones";
   acciones.append(

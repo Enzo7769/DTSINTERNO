@@ -117,13 +117,29 @@ imprimen los elementos marcados.
   descripción]` por categoría) y se carga al abrir un costo. Los
   registros antiguos se recuperan: lo que coincide con la lista se
   marca en su fila; el resto aparece como manual en su pestaña.
+  Lo agregado a mano va arriba de la lista y, al abrir un costo
+  guardado, cada pestaña con piezas parte en «Solo seleccionados».
+- **Día de la cotización**: campo propio junto al dólar y la UF.
+  Bajo él se indica si los valores son de ese día, de referencia
+  (no hubo cotización) o escritos a mano.
 - **Modelos** (`#/modelos`, `#/modelo`): catálogo en `modelosHw`.
   Tipo, nombre, otro nombre, estado, clientes e imagen (JPEG bajo
   150 KB).
 - **Especificaciones técnicas** (`#/especificaciones`,
   `#/especificacion`): la ficha técnica del mismo modelo
   (computador, pantalla, conectividad, energía). No se crea sola:
-  primero existe el modelo.
+  primero existe el modelo. Cada tarjeta y la ficha abierta muestran
+  cuántos de los 13 datos están completos (`avanceFicha` en
+  `web/js/hw-catalogo.js`) y el listado filtra las fichas con datos
+  pendientes. La ficha abierta enlaza a su modelo, lista los costos
+  con el mismo nombre de modelo y ofrece «Nuevo costo de este
+  modelo» (`#/costo?modelo=<id>`), que parte con el nombre y el tipo.
+  El costo, a su vez, enlaza a la ficha técnica si el modelo está en
+  el catálogo.
+- **Cambios sin guardar**: checklist, cartilla, costo, modelo,
+  ficha técnica, ficha de configuración y detalle del enlace avisan
+  antes de salir con cambios pendientes, firmas incluidas
+  (`web/js/cambios-pendientes.js`).
 
 Costo y modelo se relacionan por el nombre del modelo, sin
 distinguir mayúsculas, tildes ni espacios. Con la colección vacía
@@ -131,6 +147,73 @@ aparece «Importar planilla de referencia», que carga los datos de
 `Resumen costos Hardware.xlsx` (`web/js/datos-planilla.js`).
 Catálogos editables (líneas, monedas, campos de la ficha) en
 `web/js/hw-catalogo.js`.
+
+## Reglas y validaciones
+
+- **Storage** está cerrado (`storage.rules`): la app no sube
+  archivos; el PDF de la ficha de cliente se arma en el navegador.
+- **Enlace del cliente** (`fichasCliente`): sin sesión solo se lee
+  mientras el plazo está vigente (guarda claves). El cliente solo
+  cambia sus respuestas, su nombre, el estado y agrega historial;
+  no toca plazo, token, auditoría ni el PDF. El historial guarda
+  las últimas 80 acciones.
+- **Checklist**: la fecha de inspección no puede ser futura y la de
+  salida no puede ser anterior a ella. Una MAC o IP mal escrita
+  explica el formato. Un N° de serie repetido pide confirmar.
+  «Marcar todo OK» no responde por el técnico las preguntas Sí/No
+  (¿Tiene BAM?).
+- **Cartilla**: DNS2 y Proxy son opcionales.
+- **Costos**: la fecha de actualización no puede ser futura; un
+  modelo fuera del catálogo pide confirmar. Al elegir un modelo del
+  catálogo se marca su tipo.
+- **Modelos**: al renombrar un modelo con costos, se ofrece cambiar
+  el nombre también en esos costos (`web/js/modelo-costos.js`); al
+  eliminarlo, se avisa cuántos costos lo usan.
+- **Ficha de configuración**: «Nueva ficha» parte en blanco;
+  «Ejemplo SURALIS» carga la ficha de referencia. Una ficha guardada
+  se puede duplicar y eliminar. Abrir un enlace de cliente ya no
+  reemplaza lo que se edita en «Editar ficha».
+- **Enlaces de cliente**: piden un nombre con letras y un plazo
+  futuro; un nombre repetido pide confirmar; ampliar el plazo admite
+  de 1 a 90 días y avisa si reabre una ficha finalizada.
+
+Pruebas: `node test/verificar.mjs`. Las reglas se prueban con el
+emulador (requiere Java), en una carpeta con las herramientas:
+
+```text
+npm install firebase-tools @firebase/rules-unit-testing firebase
+npx firebase emulators:exec --only firestore,storage \
+  --project demo-dts "node test/reglas/reglas.test.mjs"
+```
+
+Después de cambiar reglas, publícalas:
+`firebase deploy --only firestore:rules,storage`.
+
+## Menú y diseño
+
+El menú sigue el flujo de trabajo: Checklist de salida, Cartilla de
+ruta, **Equipos y costos** (Modelos, Especificaciones técnicas,
+Base de costos HW) y **Ficha de configuración** (Fichas guardadas,
+Enlaces para clientes). Los listados comparten el mismo estilo:
+filtros en un panel, tablas con encabezado fijo y acciones compactas
+(«capa de orden visual» al final de `web/css/app.css`). En pantallas
+angostas las tablas se desplazan dentro de su recuadro.
+
+## Simulación del tótem (1.1 Config. menú)
+
+La simulación muestra el mueble completo (cabezal, pantalla, ranura de
+impresión y base) y recorre el flujo real: descanso, tipo de
+atención, RUT, trámite y subtrámite. Al emitir el ticket se abre una
+escena animada (`web/js/sim-ticket-cine.js`, solo CSS, sin archivos
+de video): el tótem imprime, el papel sale por la ranura y la vista se
+acerca hasta leer el ticket con su código (letra del trámite o «P»
+si es preferente), trámite, RUT, tótem, fecha y personas en espera.
+«Ver impresión» la repite. Respeta «reducir movimiento».
+
+El video de descanso se busca en `web/assets/dtsdescanso.mp4`. Ese
+archivo no está en el repositorio: mientras falte, se muestra una
+pantalla de descanso animada con la marca. Para usar el video real,
+cópialo en esa ruta.
 
 ## Módulos siguientes
 

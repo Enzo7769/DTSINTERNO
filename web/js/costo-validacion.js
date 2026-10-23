@@ -16,7 +16,7 @@ import {
 } from "./costeo.js";
 import { normalizarHistorial } from "./costo-historial.js";
 import { CT, textoLinea, textoLinkInvalido } from "./costo-textos.js";
-import { fechaValida } from "./fechas.js";
+import { fechaValida, hoyIso } from "./fechas.js";
 import {
   CATEGORIAS_COSTO,
   LINEAS_PRODUCTO,
@@ -180,6 +180,8 @@ export function validarCosto(datos, fechaCruda, lineasCrudas) {
   if (!datos.moneda) fallar("k-moneda", CT.faltaMoneda);
   if (fechaCruda && !datos.fechaActualizacion) {
     fallar("k-fecha", CT.fechaInvalida);
+  } else if (datos.fechaActualizacion > hoyIso()) {
+    fallar("k-fecha", CT.fechaFutura);
   }
   validarCambio(datos, fallar);
   (datos.lineas || []).forEach((linea, indice) => {

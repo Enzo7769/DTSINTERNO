@@ -3,10 +3,17 @@
  *   «1. Datos de Config.», con los datos de prueba editables.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-13
- * Dependencias: ficha-datos.js, ficha-repositorio.js,
+ * Dependencias: cambios-pendientes.js, ficha-datos.js,
+ *   ficha-repositorio.js,
  *   ficha-validacion.js, logger.js, ui.js
  */
 
+import {
+  cambiosGuardados,
+  confirmarDescarte,
+  marcarCambios,
+  vigilarCambios
+} from "./cambios-pendientes.js";
 import {
   asegurarMenu,
   asegurarRed,
@@ -14,6 +21,7 @@ import {
   equipoFisicoListo,
   equipoVacio,
   FICHA_PRUEBA,
+  fichaEnBlanco,
   modulosDeSector,
   nombreSiguiente,
   nombresUnicos,
@@ -48,20 +56,41 @@ import {
   dibujarDatosRed
 } from "./ficha-red-vista.js";
 import {
+  eliminarFicha,
   guardarFicha,
   listarFichas,
   obtenerFicha
 } from "./ficha-repositorio.js";
 import { validarFicha } from "./ficha-validacion.js";
 import { registrarError } from "./logger.js";
-import { mostrarVista, porId } from "./ui.js";
+import {
+  avisar,
+  mostrarVista,
+  pedirConfirmacion,
+  porId
+} from "./ui.js";
+
+/** Valor del selector que carga los datos de ejemplo (SURALIS). */
+const EJEMPLO = "__ejemplo";
 
 const TXT = {
   kicker: "Clever Q2",
   titulo: "Ficha de configuración",
   ayuda:
     "Cada ficha se guarda con el nombre de su licitación. "
-    + "Los datos de prueba son de SURALIS.",
+    + "«Ejemplo SURALIS» muestra una ficha completa de referencia.",
+  ejemplo: "Ejemplo SURALIS (referencia)",
+  copiaLista:
+    "Copia lista, todavía sin guardar. Cambia el nombre de la "
+    + "licitación y guarda.",
+  sufijoCopia: " (copia)",
+  borrarTitulo: "Eliminar ficha",
+  borrarTexto:
+    "Se eliminará la ficha «{nombre}». Esta acción no se puede "
+    + "deshacer.",
+  borrarOk: "Eliminar",
+  borrada: "Ficha eliminada.",
+  falloBorrar: "No se pudo eliminar la ficha.",
   licitacion: "Licitación",
   guardadas: "Fichas guardadas",
   nueva: "Nueva ficha",
@@ -74,8 +103,8 @@ const TXT = {
     "1 país, 2 oficinas, 3 UDT y 4 trámites en 1.1 "
     + "Config. menú.",
   notaSectores:
-    "(PUEDE SER UN (1) SECTOR POR TÓTEM Y VARIOS "
-    + "TÓTEM POR UN (1) SECTOR)",
+    "Puede haber un sector por tótem o varios tótems en un "
+    + "mismo sector.",
   pasoDatos: "1. Datos de config.",
   pasoMenu: "1.1 Config. menú",
   pasoRed: "2. Datos de red",
@@ -129,6 +158,11 @@ const TXT = {
 const VAL_MANUAL = "__manual";
 
 let datos = null;
+/**
+ * Lo que se edita en «Fichas guardadas». montarFichaEn (enlace del
+ * cliente) usa `datos` para otra ficha; al volver se recupera esta.
+ */
+let datosEditor = null;
 let actual = null;
 let autor = null;
 let controles = false;
@@ -163,7 +197,8 @@ export async function mostrarFicha() {
   soloLectura = false;
   internosRedEditables = true;
   raizActiva = porId("ficha-cuerpo");
-  if (!datos) datos = structuredClone(FICHA_PRUEBA);
+  if (!datosEditor) datosEditor = fichaEnBlanco("");
+  datos = datosEditor;
   asegurarMenu(datos);
   asegurarRed(datos);
   asegurarHorarios(datos);
@@ -589,7 +624,11 @@ function bloque(numero, titulo, ayuda) {
   const nodo = document.createElement("section");
   nodo.className = "tarjeta ficha-bloque";
   const h2 = document.createElement("h2");
-  h2.textContent = `${numero}. ${titulo}`;
+  h2.className = "ficha-bloque-titulo";
+  const num = document.createElement("span");
+  num.className = "ficha-num";
+  num.textContent = numero;
+  h2.append(num, document.createTextNode(titulo));
   nodo.append(h2);
   if (ayuda) {
     const p = document.createElement("p");
@@ -672,6 +711,14 @@ function campoUsuario(valor, ruta) {
   const p = document.createElement("p");
   p.className = "ayuda";
   p.textContent = TXT.usuarioSinEspacio;
+  // El aviso aparece solo cuando hace falta, no en cada fila.
+  const revisar = () => {
+    const conEspacio = /\s/.test(input.value);
+    p.hidden = !conEspacio;
+    input.classList.toggle("entrada-invalida", conEspacio);
+  };
+  revisar();
+  input.addEventListener("input", revisar);
   caja.append(input, p);
   return caja;
 }
@@ -704,6 +751,8 @@ function campoClave(valor, ruta) {
     fill.dataset.nivel = n.clave;
     fill.style.width = n.pct;
     et.textContent = n.texto;
+    // Los requisitos se muestran mientras la clave no es segura.
+    req.hidden = n.clave === "fuerte" || n.clave === "muy";
   };
   fill.className = "ficha-clave-nivel";
   barra.append(fill);
@@ -801,7 +850,8 @@ function botonAccion(texto, accion) {
   boton.className = accion.startsWith("quitar")
     ? "boton boton-secundario ficha-quitar"
     : "boton boton-secundario";
-  boton.textContent = texto;
+  if (accion.startsWith("sumar")) boton.classList.add("ficha-agregar");
+  boton.textContent = accion.startsWith("sumar") ? `+ ${texto}` : texto;
   boton.dataset.accion = accion;
   return boton;
 }
@@ -946,7 +996,7 @@ function totems(ficha) {
 function modulos(ficha) {
   asegurarMenu(ficha);
   const nodo = bloque(
-    "6",
+    "5",
     "UAC · Módulos de atención",
     "Solo aparecen los trámites del sector, "
     + "creados en 1.1 Config. menú."
@@ -988,7 +1038,7 @@ function modulos(ficha) {
  */
 function usuarios(ficha) {
   const nodo = bloque(
-    "7",
+    "6",
     "Usuarios de administración Clever Q2"
   );
   const general = document.createElement("h3");
@@ -1033,7 +1083,7 @@ function usuarios(ficha) {
  */
 function ejecutivos(ficha) {
   const nodo = bloque(
-    "8",
+    "7",
     "Usuarios UAC",
     "Ejecutivos que atienden al público."
   );
@@ -1080,7 +1130,7 @@ function ejecutivos(ficha) {
  */
 function visores(ficha) {
   const nodo = bloque(
-    "9",
+    "8",
     "Visores",
     "Puede haber más de un visor por tótem."
   );
@@ -1111,39 +1161,42 @@ function visores(ficha) {
  */
 function parametros(ficha) {
   const nodo = bloque(
-    "10",
+    "9",
     "Parámetros de tipos de atención",
     TXT.notaSalud
   );
-  nodo.append(parametro(
+  const grilla = document.createElement("div");
+  grilla.className = "ficha-param-grid";
+  nodo.append(grilla);
+  grilla.append(parametro(
     "IdCentro",
     "Código del establecimiento. Ejemplo: 10-340.",
     ficha.idCentro,
     "idCentro",
     40
   ));
-  nodo.append(parametro(
-    "Mensaje de retiro atrasado",
-    "Se muestra si pasan los minutos de tolerancia.",
-    ficha.msgAtrasado,
-    "msgAtrasado",
-    200
-  ));
-  nodo.append(parametro(
+  grilla.append(parametro(
     "Minutos de atraso tolerados",
     "Minutos después de la hora en que aún se registra.",
     ficha.minutosAtraso,
     "minutosAtraso",
     4
   ));
-  nodo.append(parametro(
+  grilla.append(parametro(
+    "Mensaje de retiro atrasado",
+    "Se muestra si pasan los minutos de tolerancia.",
+    ficha.msgAtrasado,
+    "msgAtrasado",
+    200
+  ));
+  grilla.append(parametro(
     "Minutos de adelanto tolerados",
     "Minutos antes de la hora en que ya se puede llegar.",
     ficha.minutosAdelanto,
     "minutosAdelanto",
     4
   ));
-  nodo.append(parametro(
+  grilla.append(parametro(
     "Mensaje de llegada anticipada",
     "Se muestra si llega antes del tiempo permitido.",
     ficha.msgTemprano,
@@ -1179,7 +1232,7 @@ function parametro(titulo, ayuda, valor, ruta, max) {
  */
 function fisicos(ficha) {
   const nodo = bloque(
-    "11",
+    "10",
     "Datos físicos del establecimiento"
   );
   const equipos = ficha.equipos || [];
@@ -1384,7 +1437,7 @@ function opcion(valor, etiqueta) {
  * @returns {HTMLElement}
  */
 function requisitos(ficha) {
-  const nodo = bloque("12", "Requerimientos adicionales");
+  const nodo = bloque("11", "Requerimientos adicionales");
   nodo.append(tabla(
     ["Requerimiento", TXT.estado, ""],
     ficha.requisitos.map((fila, i) => [
@@ -1752,6 +1805,7 @@ function listaDinamica(valor, ruta, obtener) {
 function enlazarControles() {
   if (controles) return;
   controles = true;
+  vigilarCambios("vista-ficha");
   porId("ficha-licitacion").addEventListener("input", () => {
     datos.licitacion = porId("ficha-licitacion").value;
   });
@@ -1761,6 +1815,8 @@ function enlazarControles() {
   porId("btn-ficha-guardar").addEventListener("click", () => {
     alGuardar().catch((error) => registrarError(error, "ficha.guardar"));
   });
+  porId("btn-ficha-copia").addEventListener("click", copiarFicha);
+  porId("btn-ficha-eliminar").addEventListener("click", pedirBorrarFicha);
 }
 
 /**
@@ -1775,30 +1831,110 @@ async function pintarLista(idMarcado) {
   vacia.value = "";
   vacia.textContent = TXT.nueva;
   select.append(vacia);
-  lista.forEach((ficha) => {
-    const opcion = document.createElement("option");
-    opcion.value = ficha.id;
-    opcion.textContent = ficha.licitacion || ficha.id;
-    select.append(opcion);
-  });
+  lista
+    .sort((a, b) => String(a.licitacion || "")
+      .localeCompare(String(b.licitacion || ""), "es"))
+    .forEach((ficha) => {
+      const opcion = document.createElement("option");
+      opcion.value = ficha.id;
+      opcion.textContent = ficha.licitacion || ficha.id;
+      select.append(opcion);
+    });
+  const ejemplo = document.createElement("option");
+  ejemplo.value = EJEMPLO;
+  ejemplo.textContent = TXT.ejemplo;
+  select.append(ejemplo);
   select.value = idMarcado || "";
+  pintarAccionesFicha();
 }
 
 /**
- * Carga la ficha elegida o vuelve a los datos de prueba.
+ * Copiar y eliminar solo tienen sentido con una ficha guardada.
+ * @returns {void}
+ */
+function pintarAccionesFicha() {
+  porId("btn-ficha-copia").hidden = !actual;
+  porId("btn-ficha-eliminar").hidden = !actual;
+}
+
+/**
+ * Deja en pantalla una copia sin guardar de la ficha abierta.
+ * @returns {void}
+ */
+function copiarFicha() {
+  if (!actual) return;
+  datos = structuredClone(datos);
+  datos.licitacion = `${datos.licitacion || ""}${TXT.sufijoCopia}`
+    .slice(0, 160);
+  datosEditor = datos;
+  actual = null;
+  porId("ficha-licitacion").value = datos.licitacion;
+  porId("ficha-lista").value = "";
+  porId("ficha-aviso").textContent = TXT.copiaLista;
+  pintarAccionesFicha();
+  marcarCambios("vista-ficha");
+  porId("ficha-licitacion").focus();
+}
+
+/**
+ * @returns {void}
+ */
+function pedirBorrarFicha() {
+  if (!actual) return;
+  const nombre = actual.licitacion || actual.id;
+  pedirConfirmacion({
+    titulo: TXT.borrarTitulo,
+    texto: TXT.borrarTexto.replace("{nombre}", nombre),
+    ok: TXT.borrarOk,
+    onOk: () => {
+      borrarFicha().catch((error) => {
+        registrarError(error, "ficha.eliminar");
+        avisar(TXT.falloBorrar, "error");
+      });
+    }
+  });
+}
+
+/**
+ * @returns {Promise<void>}
+ */
+async function borrarFicha() {
+  await eliminarFicha(actual.id);
+  actual = null;
+  datos = fichaEnBlanco("");
+  datosEditor = datos;
+  asegurarMenu(datos);
+  asegurarRed(datos);
+  porId("ficha-licitacion").value = "";
+  porId("ficha-aviso").textContent = "";
+  cambiosGuardados("vista-ficha");
+  modoManual.clear();
+  refrescar();
+  await pintarLista("");
+  avisar(TXT.borrada, "ok");
+}
+
+/**
+ * Carga la ficha elegida o una en blanco.
  * @returns {Promise<void>}
  */
 async function alElegir() {
   const id = porId("ficha-lista").value;
-  if (!id) {
+  if (!confirmarDescarte("vista-ficha")) {
+    porId("ficha-lista").value = actual ? actual.id : "";
+    return;
+  }
+  if (!id || id === EJEMPLO) {
     actual = null;
-    datos = structuredClone(FICHA_PRUEBA);
+    datos = id ? structuredClone(FICHA_PRUEBA) : fichaEnBlanco("");
   } else {
     const registro = await obtenerFicha(id);
     if (!registro) return;
     actual = registro;
     datos = sinAuditoria(registro);
   }
+  datosEditor = datos;
+  pintarAccionesFicha();
   asegurarMenu(datos);
   asegurarRed(datos);
   porId("ficha-licitacion").value = datos.licitacion || "";
@@ -1835,6 +1971,8 @@ async function alGuardar() {
     );
     actual = guardado;
     datos = sinAuditoria(guardado);
+    datosEditor = datos;
+    cambiosGuardados("vista-ficha");
     porId("ficha-licitacion").value = datos.licitacion || "";
     await pintarLista(guardado.id);
     aviso.textContent = TXT.guardada + datos.licitacion + ".";

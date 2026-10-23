@@ -2,19 +2,22 @@
  * Propósito: Catálogo de modelos en tarjetas, con filtros.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-02
- * Dependencias: constantes, errores, hw-catalogo, logger,
- *   modelo-pdf, modelo-repositorio, modelo-textos,
+ * Dependencias: constantes, errores, espec-listado, hw-catalogo,
+ *   logger, modelo-costos, modelo-pdf, modelo-repositorio,
+ *   modelo-textos,
  *   planilla-importar, tipos-equipo, ui
  */
 
 import { MSG } from "./constantes.js";
 import { mensajeError } from "./errores.js";
+import { invalidarEspecs } from "./espec-listado.js";
 import {
   ESTADOS_MODELO,
   TIPOS_MODELO,
   etiquetaDe
 } from "./hw-catalogo.js";
 import { registrarError } from "./logger.js";
+import { costosDelModelo } from "./modelo-costos.js";
 import {
   descargarCatalogoModelosPdf,
   descargarModeloPdf
@@ -23,11 +26,12 @@ import { eliminarModelo, listarModelos } from "./modelo-repositorio.js";
 import {
   MT,
   textoClientesMas,
+  textoEliminarConCostos,
   textoModelosImportados
 } from "./modelo-textos.js";
 import { importarModelos } from "./planilla-importar.js";
 import { llenarFiltroTipo } from "./tipos-equipo.js";
-import { avisar, mostrarVista, porId } from "./ui.js";
+import { avisar, mostrarVista, porId, textoConteo } from "./ui.js";
 
 const ORDEN_TIPO = new Map(TIPOS_MODELO.map((tipo, i) => [tipo.id, i]));
 const CLIENTES_VISIBLES = 2;
@@ -131,7 +135,7 @@ function pintar() {
   const lista = filtrados();
   const grid = porId("modelo-grid");
   grid.replaceChildren();
-  porId("modelo-conteo").textContent = `${lista.length} ${MT.registros}`;
+  porId("modelo-conteo").textContent = textoConteo(lista.length, "modelo");
   porId("modelo-vacio").hidden = cache.length > 0;
   const estado = porId("modelo-estado");
   estado.hidden = lista.length > 0 || cache.length === 0;
@@ -293,8 +297,13 @@ async function ejecutar(accion, id) {
     return;
   }
   if (accion === "eliminar") {
-    if (!window.confirm(MT.confirmarEliminar)) return;
+    const costos = await costosDelModelo(modelo.nombreClave);
+    const aviso = costos.length
+      ? textoEliminarConCostos(costos.length)
+      : MT.confirmarEliminar;
+    if (!window.confirm(aviso)) return;
     await eliminarModelo(id);
+    invalidarEspecs();
     cache = await listarModelos();
     pintar();
     avisar(MT.eliminado, "ok");

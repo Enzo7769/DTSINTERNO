@@ -18,6 +18,7 @@ import {
   listarEnvios
 } from "./ficha-cliente-repositorio.js";
 import {
+  claseEstado,
   etiquetaEstado,
   plazoDeCampo,
   plazoDesdeDias,
@@ -30,16 +31,21 @@ import { registrarError } from "./logger.js";
 import { avisar, mostrarVista, pedirConfirmacion, porId } from "./ui.js";
 
 const TXT = {
-  titulo: "Fichas de licitaciones",
-  kicker: "Configuración para el cliente",
-  registros: "fichas",
+  titulo: "Enlaces para clientes | DTS",
+  kicker: "Ficha de configuración",
   cargando: "Cargando fichas…",
   vacio: "Aún no hay fichas enviadas al cliente.",
-  generar: "Generar ficha",
+  generar: "Generar enlace",
   copiado: "Enlace copiado.",
   creada: "Ficha generada. Copia el enlace para el cliente.",
-  fallo: "No se pudo generar la ficha. Publica "
-    + "firestore.rules en Firebase e inténtalo de nuevo.",
+  fallo: "No se pudo generar la ficha. Revisa la conexión e "
+    + "inténtalo de nuevo.",
+  diasPregunta: "¿Cuántos días sumar al plazo? (1 a 90)",
+  diasReabrir: "Esta ficha está finalizada: al sumar días se reabre "
+    + "y el cliente podrá volver a editarla. ¿Cuántos días? (1 a 90)",
+  diasInvalidos: "Escribe entre 1 y 90 días.",
+  repetida: "Ya hay una ficha enviada con ese nombre de licitación. "
+    + "¿Generar otra igual?",
   plazoOk: "Plazo actualizado.",
   ver: "Ver",
   copiar: "Copiar enlace",
@@ -121,7 +127,7 @@ function pintar() {
   const cuerpo = porId("envio-cuerpo");
   cuerpo.replaceChildren();
   porId("conteo-envios").textContent =
-    `${lista.length} ${TXT.registros}`;
+    lista.length === 1 ? "1 enlace" : `${lista.length} enlaces`;
   if (!lista.length) {
     porId("estado-envios").textContent = TXT.vacio;
     porId("estado-envios").hidden = false;
@@ -152,14 +158,24 @@ async function generar() {
     avisar(revision.mensaje, "error");
     return;
   }
-  const guardado = await crearEnvio(
-    revision.datos,
-    autor || { uid: "", email: "" }
-  );
-  cache = null;
-  porId("envio-enlace").value = urlPublica(guardado.token);
-  avisar(TXT.creada, "ok");
-  await mostrarListadoEnvios();
+  const repetida = (cache || []).some((fila) =>
+    fila.licitacionClave === revision.datos.licitacionClave);
+  if (repetida && !window.confirm(TXT.repetida)) return;
+  const boton = porId("btn-envio-generar");
+  boton.disabled = true;
+  try {
+    const guardado = await crearEnvio(
+      revision.datos,
+      autor || { uid: "", email: "" }
+    );
+    cache = null;
+    porId("envio-licitacion").value = "";
+    porId("envio-enlace").value = urlPublica(guardado.token);
+    avisar(TXT.creada, "ok");
+    await mostrarListadoEnvios();
+  } finally {
+    boton.disabled = false;
+  }
 }
 
 /**
@@ -193,10 +209,18 @@ async function alAccion(accion, id) {
     return;
   }
   if (accion === "ampliar") {
-    const extra = Number(prompt("¿Cuántos días sumar?", "3"));
-    if (!Number.isFinite(extra) || extra <= 0) return;
     const fila = (cache || []).find((item) => item.id === id);
     if (!fila) return;
+    const pregunta = fila.estado === "finalizado"
+      ? TXT.diasReabrir
+      : TXT.diasPregunta;
+    const respuesta = window.prompt(pregunta, "3");
+    if (respuesta === null) return;
+    const extra = Number(respuesta);
+    if (!Number.isInteger(extra) || extra < 1 || extra > 90) {
+      avisar(TXT.diasInvalidos, "aviso");
+      return;
+    }
     const ms = fila.plazoHasta && fila.plazoHasta.toMillis
       ? fila.plazoHasta.toMillis()
       : (Number(fila.plazoHasta) || Date.now());
@@ -220,22 +244,27 @@ function crearFila(fila) {
   const tr = document.createElement("tr");
   const resto = restoPlazo(fila.plazoHasta);
   const celdas = [
-    String(fila.numero || ""),
-    fila.licitacion || "",
-    fila.rellenadoPor || "—",
-    formatearFechaHora(fila.creadoEn),
-    formatearFechaHora(fila.actualizadoEn),
-    formatearFechaHora(fila.finalizadoEn) || "—",
-    formatearFechaHora(fila.plazoHasta),
-    resto.texto,
-    etiquetaEstado(fila)
+    [String(fila.numero || ""), "numero"],
+    [fila.licitacion || "", "fuerte"],
+    [fila.rellenadoPor || "—", ""],
+    [formatearFechaHora(fila.creadoEn), "nowrap"],
+    [formatearFechaHora(fila.actualizadoEn), "nowrap"],
+    [formatearFechaHora(fila.finalizadoEn) || "—", "nowrap"],
+    [formatearFechaHora(fila.plazoHasta), "nowrap"],
+    [resto.texto, "nowrap"]
   ];
-  celdas.forEach((texto) => {
+  celdas.forEach(([texto, clase]) => {
     const td = document.createElement("td");
     td.textContent = texto;
+    if (clase) td.className = clase;
     tr.append(td);
   });
-  tr.append(acciones(fila));
+  const estado = document.createElement("td");
+  const pill = document.createElement("span");
+  pill.className = `pill ${claseEstado(fila)}`;
+  pill.textContent = etiquetaEstado(fila);
+  estado.append(pill);
+  tr.append(estado, acciones(fila));
   return tr;
 }
 
@@ -245,7 +274,7 @@ function crearFila(fila) {
  */
 function acciones(fila) {
   const td = document.createElement("td");
-  td.className = "tabla-acciones";
+  td.className = "acciones";
   const botones = [
     [TXT.ver, "ver"],
     [TXT.copiar, "copiar"],

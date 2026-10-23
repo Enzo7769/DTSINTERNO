@@ -13,9 +13,19 @@ import {
   resumenCategorias,
   textoUsdYClp
 } from "./costeo.js";
-import { AYUDA_COSTEO, CT, textoLote } from "./costo-textos.js";
+import {
+  AYUDA_COSTEO,
+  CT,
+  textoLote,
+  textoSinValor
+} from "./costo-textos.js";
 import { LIMITES_COSTO, normalizarCosto } from "./costo-validacion.js";
-import { MONEDAS, decimalesDe, formatoMonto } from "./hw-catalogo.js";
+import {
+  MONEDAS,
+  decimalesDe,
+  formatoMonto,
+  leerMonto
+} from "./hw-catalogo.js";
 import { porId } from "./ui.js";
 
 /** Moneda sugerida para un componente nuevo: casi todo se cotiza así. */
@@ -357,6 +367,7 @@ export function pintarResumen(limpio) {
   }));
   porId("costo-lote-titulo").textContent =
     `${CT.costoLote} (${textoLote(limpio.cantidadEquipos)})`;
+  pintarBarraResumen(limpio);
   pintarMontoPar(
     porId("costo-total"),
     limpio.costoLote,
@@ -366,6 +377,40 @@ export function pintarResumen(limpio) {
   porId("costo-equivale").textContent = limpio.costo > 0
     ? textoUsdYClp(limpio.costo, limpio.moneda, limpio.tipoCambio)
     : "";
+}
+
+/**
+ * Totales siempre visibles en la barra de guardar, y aviso si hay
+ * componentes marcados sin precio (no suman y el costo queda bajo).
+ * @param {object} limpio costo normalizado
+ * @returns {void}
+ */
+function pintarBarraResumen(limpio) {
+  const moneda = limpio.moneda;
+  porId("costo-barra-equipo").textContent = limpio.costo > 0
+    ? formatoMonto(limpio.costo, moneda)
+    : "—";
+  porId("costo-barra-lote-titulo").textContent =
+    `${CT.lote} (${textoLote(limpio.cantidadEquipos)})`;
+  porId("costo-barra-lote").textContent = limpio.costoLote > 0
+    ? formatoMonto(limpio.costoLote, moneda)
+    : "—";
+  porId("costo-barra-items").textContent = String(limpio.lineas.length);
+  const sinValor = componentesSinValor().length;
+  const aviso = porId("costo-barra-aviso");
+  aviso.hidden = sinValor === 0;
+  aviso.textContent = textoSinValor(sinValor);
+}
+
+/**
+ * Filas marcadas cuyo valor unitario está vacío o en cero.
+ * @returns {HTMLTableRowElement[]}
+ */
+export function componentesSinValor() {
+  return [...porId("costo-lineas").querySelectorAll(SELECTOR_FILA)]
+    .filter((tr) => tr.dataset.categoria !== "manoObra")
+    .filter((tr) => incluida(tr)
+      && !(leerMonto(valorDe(tr, "valor"), 4) > 0));
 }
 
 /**

@@ -66,8 +66,15 @@ const TXT = {
     "El administrador amplió el plazo. "
     + "Ya puedes seguir editando y finalizar de nuevo.",
   fallo:
-    "No se pudo guardar. Si usas bloqueador de anuncios, "
-    + "permítelo en este sitio e inténtalo de nuevo.",
+    "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo. "
+    + "Si usas bloqueador de anuncios, permite este sitio.",
+  rechazado:
+    "No se pudo guardar: el plazo venció o el administrador "
+    + "cerró la ficha. Recarga la página para ver su estado.",
+  sinAcceso:
+    "Este enlace ya no está disponible: el plazo venció o el "
+    + "enlace no existe. Si necesitas entrar, pide más tiempo al "
+    + "administrador.",
   seguro: "¿Está seguro de que quiere guardar?",
   faltanTitulo: "Faltan estos campos:",
   sinFaltan: "Se guardará el avance de la ficha.",
@@ -107,7 +114,17 @@ export async function mostrarFichaPublica(token) {
     ocultarFormularioVencido();
     return;
   }
-  actual = await obtenerEnvio(token);
+  try {
+    actual = await obtenerEnvio(token);
+  } catch (error) {
+    registrarError(error, "ficha.publica.abrir");
+    actual = null;
+    porId("pub-aviso").textContent = esPermiso(error)
+      ? TXT.sinAcceso
+      : TXT.fallo;
+    ocultarFormularioVencido();
+    return;
+  }
   if (!actual) {
     porId("pub-aviso").textContent = TXT.noHay;
     cerrarEnlaceVencido(false);
@@ -660,5 +677,17 @@ function detenerTick() {
  */
 function fallo(error) {
   registrarError(error, "ficha.publica");
-  porId("pub-aviso").textContent = TXT.fallo;
+  porId("pub-aviso").textContent = esPermiso(error)
+    ? TXT.rechazado
+    : TXT.fallo;
+}
+
+/**
+ * Las reglas rechazan cuando el plazo venció o la ficha se cerró.
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+function esPermiso(error) {
+  return Boolean(error && typeof error === "object"
+    && "code" in error && error.code === "permission-denied");
 }

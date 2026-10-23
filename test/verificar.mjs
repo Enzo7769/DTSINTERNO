@@ -19,12 +19,30 @@ import {
   semillaCostos,
   semillaModelos
 } from "../web/js/demo.js";
-import { formatoMonto, leerMonto } from "../web/js/hw-catalogo.js";
+import {
+  textoAvance,
+  textoCostosModelo
+} from "../web/js/espec-textos.js";
+import {
+  CAMPOS_FICHA,
+  GRUPOS_FICHA,
+  avanceFicha,
+  formatoMonto,
+  leerMonto
+} from "../web/js/hw-catalogo.js";
 import {
   normalizarModelo,
   validarModelo
 } from "../web/js/modelo-validacion.js";
 import { fechaValida, formatearFecha } from "../web/js/fechas.js";
+import {
+  alertas as alertasCostos,
+  composicion,
+  enUsd,
+  filasResumen,
+  indicadores,
+  variacion as variacionCosto
+} from "../web/js/costo-resumen.js";
 import {
   claveLicitacion,
   validarFicha
@@ -84,10 +102,12 @@ import {
 } from "../web/js/ficha-menu-vista.js";
 import { preservarRedInterna } from "../web/js/ficha-red-vista.js";
 import {
+  codigoTicket,
   esSi,
   faseTrasDescanso,
   formatearRut,
-  mensajeTicket
+  mensajeTicket,
+  rutConPuntos
 } from "../web/js/ficha-sim-totem.js";
 import { aplicarFiltros, ordenarPorSalida } from "../web/js/filtros.js";
 import {
@@ -1002,6 +1022,117 @@ afirmar(
       red: []
     }).red.length === 2,
   "la red se arma por tótem y visor con IP por octetos"
+);
+
+const parcial = avanceFicha({ pantalla: "LCD 22\"", peso: "  ", audio: "x" });
+const llena = Object.fromEntries(CAMPOS_FICHA.map((campo) => [campo.id, "s"]));
+afirmar(
+  parcial.llenos === 2 && parcial.total === CAMPOS_FICHA.length
+    && avanceFicha(null).llenos === 0
+    && avanceFicha(llena).llenos === CAMPOS_FICHA.length
+    && avanceFicha(parcial, GRUPOS_FICHA[0].campos).total === 2
+    && CAMPOS_FICHA.every((campo) => campo.ejemplo)
+    && textoAvance(2, 13) === "2 de 13 datos completos",
+  "la ficha técnica cuenta sus datos completos y trae ejemplos"
+);
+afirmar(
+  textoCostosModelo([]) === "Sin costos registrados"
+    && textoCostosModelo([{ costo: 10, moneda: "USD" }])
+      === "1 costo · USD 10,00 por equipo"
+    && textoCostosModelo([
+      { costo: 10, moneda: "USD" },
+      { costo: 9, moneda: "USD" }
+    ]).startsWith("2 costos · el más reciente, USD 10,00"),
+  "la ficha resume los costos de su modelo"
+);
+
+const AHORA = Date.UTC(2026, 9, 23);
+const nuevoEnvio = (licitacion, plazoHasta) => validarEnvio({
+  ...fichaEnBlanco(licitacion),
+  licitacion,
+  plazoHasta
+}, AHORA);
+afirmar(
+  nuevoEnvio("Pendiente", AHORA + 3600000).ok
+    && !nuevoEnvio("", AHORA + 3600000).ok
+    && !nuevoEnvio("###", AHORA + 3600000).ok
+    && !nuevoEnvio("SURALIS", AHORA - 1000).ok,
+  "un enlace nuevo pide nombre con letras y un plazo futuro"
+);
+afirmar(
+  leerMonto(0.125, 3) === 0.125
+    && leerMonto(1172.68, 2) === 1172.68
+    && leerMonto("1.277,20", 2) === 1277.2
+    && leerMonto("3.840", 2) === 3840,
+  "un monto ya guardado con 3 decimales no se lee como miles"
+);
+
+const checklistBase = semilla()[0];
+const revisar = (cambios, crudo) => validarDatos(
+  normalizarChecklist({ ...checklistBase, ...cambios }),
+  { ...checklistBase, ...cambios, ...crudo }
+);
+const salidaAntes = revisar({
+  fechaInspeccion: "2026-09-28",
+  fechaSalida: "2026-09-20"
+});
+const macMala = revisar({ mac: "ZZ:11" });
+afirmar(
+  !salidaAntes.valido && salidaAntes.campos.fechaSalida
+    && !revisar({ fechaInspeccion: "2999-01-01",
+      fechaSalida: "2999-01-02" }).campos.fechaSalida
+    && revisar({ fechaInspeccion: "2999-01-01" }).campos.fechaInspeccion
+    && macMala.errores.some((texto) => texto.includes("formato válido"))
+    && revisar({ mac: "" }).errores
+      .some((texto) => texto.startsWith("Indica la MAC")),
+  "el checklist revisa el orden de las fechas y explica la MAC inválida"
+);
+
+afirmar(
+  codigoTicket(7, 0, false) === "A-007"
+    && codigoTicket(12, 2, false) === "C-012"
+    && codigoTicket(3, 1, true) === "P-003"
+    && rutConPuntos("123456785") === "12.345.678-5"
+    && rutConPuntos("1") === "1",
+  "el ticket simulado lleva letra del trámite y RUT con puntos"
+);
+
+const REF = { usd: 1000, uf: 40000 };
+const costoBase = {
+  id: "a", modelo: "T1", modeloClave: "T1", linea: "cleverq",
+  tipoEquipo: "totem", moneda: "CLP", costo: 2000000,
+  tipoCambio: { usd: 800, uf: 0 }, fechaActualizacion: "2026-01-10",
+  numero: 1, lineas: []
+};
+const filasR = filasResumen([
+  costoBase,
+  { ...costoBase, id: "b", numero: 2, moneda: "USD", costo: 2600,
+    fechaActualizacion: "2026-09-01", tipoCambio: {} },
+  { ...costoBase, id: "c", modelo: "V1", modeloClave: "V1",
+    moneda: "UF", costo: 10, tipoCambio: {}, fechaActualizacion: "" }
+], REF, "2026-10-23");
+afirmar(
+  enUsd(2000000, costoBase, REF) === 2500
+    && filasR.length === 2
+    && filasR[0].id === "b" && filasR[0].cotizaciones === 2
+    && filasR[1].usd === 400 && filasR[1].dias === Infinity
+    && indicadores(filasR, 3).promedio === 1500,
+  "el resumen usa la cotización vigente de cada modelo, en dólares"
+);
+afirmar(
+  variacionCosto({ historial: [
+    { costo: 1000, moneda: "USD" },
+    { costo: 1100, moneda: "USD" }
+  ] }, REF).pct === 10
+    && variacionCosto({ historial: [] }, REF) === null
+    && composicion([{ ...costoBase, moneda: "USD", tipoCambio: {},
+      lineas: [{ categoria: "dispositivos", subtotalCosto: 30 },
+        { categoria: "arneses", subtotalCosto: 10 }] }], REF)
+      .partes[0].pct === 75
+    && alertasCostos(filasR, [], [{ id: "m", nombre: "Z",
+      nombreClave: "Z", tipo: "totem" }])
+      .some((a) => a.tipo === "sinCosto"),
+  "el resumen calcula variación, composición y alertas"
 );
 
 if (fallos > 0) {

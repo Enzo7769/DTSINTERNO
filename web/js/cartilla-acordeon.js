@@ -263,7 +263,8 @@ function numeroVisible(seccion, item, indice) {
  */
 function incluidaSiempre(seccion, item) {
   if (item.libre) return true;
-  return Boolean(seccion.obligatoria) && !item.nombreLibre;
+  return Boolean(seccion.obligatoria) && !item.nombreLibre
+    && !item.opcional;
 }
 
 /**

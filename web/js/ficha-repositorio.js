@@ -20,3 +20,4 @@ const repo = crearRepositorio({
 export const listarFichas = repo.listar;
 export const obtenerFicha = repo.obtener;
 export const guardarFicha = repo.guardar;
+export const eliminarFicha = repo.eliminar;

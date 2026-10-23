@@ -12,7 +12,6 @@ export const MT = {
   nuevo: "Nuevo modelo",
   editar: "Editar modelo",
   sinGuardar: "Borrador todavía no guardado",
-  registros: "modelos",
   cargando: "Cargando modelos…",
   sinResultados: "No hay modelos con esos filtros.",
   vacio: "El catálogo de modelos está vacío.",
@@ -21,6 +20,9 @@ export const MT = {
     "Se eliminará este modelo del catálogo. Esta acción no se "
     + "puede deshacer.",
   eliminado: "Modelo eliminado.",
+  conCostos:
+    "Los costos no se borran, pero quedarán sin modelo en el "
+    + "catálogo.",
   creadoTitulo: "Modelo creado",
   actualizadoTitulo: "Modelo actualizado",
   volver: "Volver a modelos",
@@ -41,6 +43,9 @@ export const MT = {
   faltaTipo: "Elige el tipo de modelo.",
   faltaNombre: "Indica el nombre del modelo.",
   nombreDuplicado: "Ya existe un modelo con ese nombre.",
+  costosNoRenombrados:
+    "El modelo se guardó, pero no se pudieron actualizar todos sus "
+    + "costos. Revísalos en la Base de costos HW.",
   tituloPdf: "Modelo de equipo",
   usoInterno: "Uso interno",
   generado: "Documento generado el",
@@ -111,4 +116,37 @@ export function textoClientesMas(primeros, resto) {
  */
 export function textoModeloActualizado(numero) {
   return `El modelo N° ${numero} se actualizó correctamente.`;
+}
+
+/**
+ * @param {number} n costos que usan el modelo
+ * @returns {string}
+ */
+export function textoEliminarConCostos(n) {
+  const costos = n === 1 ? "1 costo usa" : `${n} costos usan`;
+  return `${MT.confirmarEliminar}\n\n${costos} este modelo. `
+    + MT.conCostos;
+}
+
+/**
+ * @param {number} n
+ * @param {string} anterior
+ * @param {string} nuevo
+ * @returns {string}
+ */
+export function textoRenombrarCostos(n, anterior, nuevo) {
+  const costos = n === 1 ? "1 costo usa" : `${n} costos usan`;
+  return `${costos} el nombre «${anterior}». ¿Cambiarlo también a `
+    + `«${nuevo}»? Si no, esos costos dejarán de verse en la ficha `
+    + "técnica de este modelo.";
+}
+
+/**
+ * @param {number} n
+ * @returns {string}
+ */
+export function textoCostosRenombrados(n) {
+  return n === 1
+    ? "Se actualizó 1 costo con el nombre nuevo."
+    : `Se actualizaron ${n} costos con el nombre nuevo.`;
 }

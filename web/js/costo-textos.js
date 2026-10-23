@@ -50,6 +50,10 @@ export const CT = {
   faltaMoneda: "Elige la moneda.",
   faltaCosto: "Indica un costo mayor que cero.",
   fechaInvalida: "La fecha de actualización no es válida.",
+  fechaFutura: "La fecha de actualización no puede ser posterior a hoy.",
+  confirmarModeloLibre:
+    "Ese modelo no está en el catálogo, así que el costo no se verá "
+    + "en ninguna ficha técnica. ¿Guardar igual?",
   faltaConcepto: "indica el componente.",
   cantidadInvalida: "la cantidad debe ser mayor que cero (máx. 9999).",
   faltaDolar:
@@ -68,6 +72,10 @@ export const CT = {
   resumenCategorias: "Resumen por categoría",
   costoEquipo: "Costo por equipo",
   costoLote: "Costo total del lote",
+  lote: "Lote",
+  confirmarSinValor:
+    "Hay componentes marcados sin valor unitario: no suman al costo. "
+    + "¿Guardar igual?",
   equivale: "Equivale a",
   sinCambio: "sin tipo de cambio",
   comoUsar: "¿Cómo se usa esta hoja de costeo?",
@@ -87,7 +95,7 @@ export const CT = {
     "Esta pestaña no tiene lista. Agrega los componentes a mano.",
   sinFiltro: "Ningún componente coincide con la búsqueda.",
   cargandoLista: "Cargando lista de componentes…",
-  manual: "Manual",
+  manual: "Agregados a mano",
   cotizacion: "Cotización",
   conversion: "Convertido con el tipo de cambio",
   tituloPdf: "Ficha de costo de hardware",
@@ -153,10 +161,20 @@ export const CT = {
   importando: "Importando…",
   sinDatos: "No hay datos para exportar.",
   verModelo: "Ver modelo",
+  vigente: "Vigente",
+  anterior: "Anterior",
+  anteriorTitulo:
+    "Cotización anterior: hay una más reciente de este modelo y línea.",
   modeloCatalogo: "Modelo del catálogo.",
   modeloLibre:
-    "No está en el catálogo. Puedes agregarlo en «Modelos y "
-    + "especificaciones técnicas».",
+    "No está en el catálogo. Créalo en «Modelos» para ver su "
+    + "ficha técnica junto a este costo.",
+  cambioReferencia:
+    "No se pudo consultar la cotización: son valores de "
+    + "referencia. Revísalos o elige otro día.",
+  cambioManual:
+    "Dólar o UF escritos a mano. Elige un día para usar su "
+    + "cotización.",
   csvArchivo: "Base_costos_HW.csv",
   resumenArchivo: "Resumen_costos_HW.pdf",
   hhIncluir: "Incluir HH en este costo",
@@ -204,7 +222,10 @@ export const AYUDA_COSTEO = [
       + "Ferretería, Insumos, SW, HH y Otros. Cada pestaña muestra "
       + "su lista completa; el número junto al nombre indica "
       + "cuántos componentes están incluidos. Usa «Buscar en esta "
-      + "pestaña» o «Solo seleccionados» para encontrar rápido."
+      + "pestaña» o «Solo seleccionados» para encontrar rápido. Al "
+      + "abrir un costo guardado, las pestañas parten mostrando solo "
+      + "lo incluido: desmarca «Solo seleccionados» para ver la "
+      + "lista completa."
   },
   {
     titulo: "5. Incluir componentes",
@@ -245,6 +266,16 @@ export const AYUDA_COSTEO = [
 ];
 
 /**
+ * @param {number} n componentes marcados sin precio
+ * @returns {string}
+ */
+export function textoSinValor(n) {
+  return n === 1
+    ? "1 componente marcado no tiene valor unitario."
+    : `${n} componentes marcados no tienen valor unitario.`;
+}
+
+/**
  * @param {number} n equipos del lote
  * @returns {string}
  */
@@ -269,6 +300,14 @@ export function textoHhValorLote(n) {
 export function textoClienteGuardado(nombre) {
   const corto = String(nombre || "").slice(0, 80);
   return `Cliente «${corto}» guardado. Ya aparece en la lista.`;
+}
+
+/**
+ * @param {string} fecha día de la cotización, ya formateado
+ * @returns {string}
+ */
+export function textoCambioDia(fecha) {
+  return `Dólar y UF del ${fecha}.`;
 }
 
 /**

@@ -7,7 +7,8 @@
  * Tipos de sección:
  * - fija: todos los ítems aparecen siempre.
  * - seleccionable: el usuario marca qué ítems lleva el equipo.
- * - obligatoria: hay que completar el apartado para guardar.
+ * - obligatoria: hay que completar el apartado para guardar. Un ítem
+ *   con opcional: true se marca solo si el equipo lo usa.
  * - agregar: la sección suma filas libres con el botón +.
  * La numeración sigue la cartilla en papel.
  */
@@ -138,9 +139,9 @@ export const SECCIONES_CARTILLA = [
       { id: "cliMask", nombre: "MASK", formato: "ip" },
       { id: "cliGw", nombre: "GW", formato: "ip" },
       { id: "cliDns1", nombre: "DNS1", formato: "ip" },
-      { id: "cliDns2", nombre: "DNS2", formato: "ip" },
+      { id: "cliDns2", nombre: "DNS2", formato: "ip", opcional: true },
       { id: "cliHostname", nombre: "Hostname" },
-      { id: "cliProxy", nombre: "Proxy" },
+      { id: "cliProxy", nombre: "Proxy", opcional: true },
       {
         id: "cliOtro",
         nombre: "Otra configuración",

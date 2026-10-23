@@ -98,7 +98,7 @@ export async function guardarCartilla(crudo, previa, autor) {
         ? previa.creadoEn
         : fsMod.serverTimestamp(),
       creadoPor: previa && previa.creadoPor ? previa.creadoPor : autor.uid,
-      creadoPorEmail: previa && previa.creadoPorEmail
+      creadoPorEmail: previa && typeof previa.creadoPorEmail === "string"
         ? previa.creadoPorEmail
         : (autor.email || ""),
       actualizadoEn: fsMod.serverTimestamp(),

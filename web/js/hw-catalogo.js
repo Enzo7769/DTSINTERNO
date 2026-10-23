@@ -57,39 +57,66 @@ export const GRUPOS_FICHA = [
   {
     titulo: "Computador",
     campos: [
-      { id: "computador", etiqueta: "CPU, RAM y almacenamiento" },
-      { id: "sistemaOperativo", etiqueta: "Sistema operativo" }
+      { id: "computador", etiqueta: "CPU, RAM y almacenamiento",
+        ejemplo: "Ej.: Intel Celeron N5095 · RAM 8 GB · SSD 128 GB" },
+      { id: "sistemaOperativo", etiqueta: "Sistema operativo",
+        ejemplo: "Ej.: Windows 11 Pro" }
     ]
   },
   {
     titulo: "Pantalla e interacción",
     campos: [
-      { id: "pantalla", etiqueta: "Pantalla" },
-      { id: "tactil", etiqueta: "Táctil" },
-      { id: "audio", etiqueta: "Audio" }
+      { id: "pantalla", etiqueta: "Pantalla",
+        ejemplo: "Ej.: LCD 21,5\" 1920 × 1080 (FHD)" },
+      { id: "tactil", etiqueta: "Táctil",
+        ejemplo: "Ej.: Capacitivo 10 puntos" },
+      { id: "audio", etiqueta: "Audio",
+        ejemplo: "Ej.: Parlantes 2 × 3 W" }
     ]
   },
   {
     titulo: "Periféricos y conectividad",
     campos: [
-      { id: "impresora", etiqueta: "Impresora" },
-      { id: "conectividad", etiqueta: "Conectividad" },
-      { id: "conectores", etiqueta: "Conectores" },
-      { id: "accesorios", etiqueta: "Accesorios" }
+      { id: "impresora", etiqueta: "Impresora",
+        ejemplo: "Ej.: Térmica 80 mm con corte automático" },
+      { id: "conectividad", etiqueta: "Conectividad",
+        ejemplo: "Ej.: WiFi 2,4 + 5,8 GHz · Ethernet 1000 Mbps" },
+      { id: "conectores", etiqueta: "Conectores",
+        ejemplo: "Ej.: Poder C14 · Red RJ45" },
+      { id: "accesorios", etiqueta: "Accesorios",
+        ejemplo: "Ej.: Llave · Cable de poder · Cable de red" }
     ]
   },
   {
     titulo: "Energía y estructura",
     campos: [
-      { id: "alimentacion", etiqueta: "Fuente de alimentación" },
-      { id: "consumo", etiqueta: "Consumo" },
-      { id: "dimensiones", etiqueta: "Dimensiones" },
-      { id: "peso", etiqueta: "Peso" }
+      { id: "alimentacion", etiqueta: "Fuente de alimentación",
+        ejemplo: "Ej.: 220 V AC, 50 Hz" },
+      { id: "consumo", etiqueta: "Consumo",
+        ejemplo: "Ej.: 48 W" },
+      { id: "dimensiones", etiqueta: "Dimensiones",
+        ejemplo: "Ej.: Base 41,5 × 45 cm; alto 140 cm" },
+      { id: "peso", etiqueta: "Peso",
+        ejemplo: "Ej.: 30 kg" }
     ]
   }
 ];
 
 export const CAMPOS_FICHA = GRUPOS_FICHA.flatMap((grupo) => grupo.campos);
+
+/**
+ * Cuántos campos de la ficha técnica tienen datos.
+ * @param {object|null|undefined} ficha
+ * @param {{id: string}[]} [campos] por defecto, todos
+ * @returns {{llenos: number, total: number}}
+ */
+export function avanceFicha(ficha, campos = CAMPOS_FICHA) {
+  const datos = ficha || {};
+  const llenos = campos
+    .filter((campo) => String(datos[campo.id] ?? "").trim())
+    .length;
+  return { llenos, total: campos.length };
+}
 
 /**
  * @param {{id: string, etiqueta: string}[]} lista
@@ -127,12 +154,18 @@ export function formatoMonto(valor, moneda) {
 }
 
 /**
- * Lee montos como 3840.69, 3.840,69 o 3840,69.
+ * Lee montos como 3840.69, 3.840,69 o 3840,69. Un número ya guardado
+ * se usa tal cual: 0.125 no es «ciento veinticinco».
  * @param {unknown} valor
  * @param {number} decimales
  * @returns {number}
  */
 export function leerMonto(valor, decimales) {
+  const factor = 10 ** decimales;
+  if (typeof valor === "number") {
+    if (!Number.isFinite(valor) || valor < 0) return 0;
+    return Math.round(valor * factor) / factor;
+  }
   let limpio = String(valor ?? "").replace(/[^\d.,]/g, "");
   if (!limpio) return 0;
   const coma = limpio.lastIndexOf(",");
@@ -148,7 +181,6 @@ export function leerMonto(valor, decimales) {
   }
   const n = Number(limpio);
   if (!Number.isFinite(n) || n < 0) return 0;
-  const factor = 10 ** decimales;
   return Math.round(n * factor) / factor;
 }
 

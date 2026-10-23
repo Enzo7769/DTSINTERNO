@@ -2,13 +2,17 @@
  * Propósito: Formulario de alta y edición de la Base de costos HW.
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-02
- * Dependencias: config, costo-clientes, costo-hh, costo-historial,
- *   costo-historial-vista, costo-hoja, costo-lineas, costo-pdf,
- *   costo-repositorio, costo-textos, costo-validacion, errores,
+ * Dependencias: cambios-pendientes, config, costo-clientes, costo-hh,
+ *   costo-historial, costo-historial-vista, costo-hoja, costo-lineas,
+ *   costo-pdf, costo-repositorio, costo-textos, costo-validacion, errores,
  *   fechas, hw-catalogo, logger, modelo-repositorio,
  *   tipo-cambio-dia, tipos-equipo, ui
  */
 
+import {
+  cambiosGuardados,
+  vigilarCambios
+} from "./cambios-pendientes.js";
 import { APP } from "./config.js";
 import {
   cargarClientesCosto,
@@ -26,6 +30,7 @@ import {
   pintarPestanas
 } from "./costo-hoja.js";
 import {
+  componentesSinValor,
   leerLineas,
   numeroVisible,
   pintarAyudaCosteo,
@@ -38,11 +43,12 @@ import {
   CT,
   textoActualizado,
   textoCopiaDe,
+  textoCambioDia,
   textoCreado
 } from "./costo-textos.js";
 import { normalizarCosto, validarCosto } from "./costo-validacion.js";
 import { mensajeError } from "./errores.js";
-import { hoyIso } from "./fechas.js";
+import { formatearFecha, hoyIso } from "./fechas.js";
 import {
   LINEAS_PRODUCTO,
   MONEDAS,
@@ -55,9 +61,10 @@ import {
   cambioEnFecha,
   fechaConsultable
 } from "./tipo-cambio-dia.js";
-import { listarModelos } from "./modelo-repositorio.js";
+import { listarModelos, obtenerModelo } from "./modelo-repositorio.js";
 import {
   GRUPO_COSTO,
+  TIPOS_EQUIPO,
   leerTipo,
   marcarTipo,
   pintarTipo
@@ -78,12 +85,17 @@ const CAMPOS = {
   observaciones: "k-obs"
 };
 
+/** Tipos que admite un costo (el catálogo suma «componente»). */
+const GRUPO_COSTO_IDS = new Set(TIPOS_EQUIPO.map((tipo) => tipo.id));
+
 let autor = { uid: "", email: "", nombre: "" };
 let actual = null;
 let guardando = false;
 let modelos = [];
 /** Día de la cotización del dólar en uso; vacío si se escribió a mano. */
 let fechaCambio = "";
+/** Dólar y UF salieron de config porque no hubo cotización. */
+let cambioReferencia = false;
 
 /**
  * @param {() => void} alGuardar
@@ -94,6 +106,7 @@ export function iniciarCosto(alGuardar) {
   llenarSelect(porId("k-moneda"), MONEDAS);
   pintarTipo(porId("tipo-costo"), GRUPO_COSTO, "k-tipo");
   porId("tipo-costo").addEventListener("change", pintarSugerencias);
+  vigilarCambios("vista-costo");
   porId("k-modelo").addEventListener("input", pintarAyudaModelo);
   pintarAyudaCosteo();
   iniciarHoja(recalcular);
@@ -113,8 +126,12 @@ export function iniciarCosto(alGuardar) {
   porId("k-cambio-fecha").addEventListener("change", () => {
     usarCotizacion(porId("k-cambio-fecha").value).catch(fallo);
   });
-  porId("k-cambio-usd").addEventListener("input", () => {
-    fechaCambio = "";
+  ["k-cambio-usd", "k-cambio-uf"].forEach((id) => {
+    porId(id).addEventListener("input", () => {
+      fechaCambio = "";
+      cambioReferencia = false;
+      pintarAyudaCambio();
+    });
   });
   porId("vista-costo").addEventListener("input", limpiarMarca);
   porId("vista-costo").addEventListener("change", limpiarMarca);
@@ -150,16 +167,23 @@ export function definirAutorCosto(sesion) {
 }
 
 /**
+ * @param {string} [modeloId] modelo del catálogo con que parte
  * @returns {Promise<void>}
  */
-export async function mostrarCostoNuevo() {
+export async function mostrarCostoNuevo(modeloId) {
   actual = null;
   limpiarErrores();
   porId("costo-titulo").textContent = CT.nueva;
   porId("costo-meta").textContent = CT.sinGuardar;
   document.title = CT.tituloNuevo;
-  marcarTipo(GRUPO_COSTO, "");
-  escribir({ moneda: MONEDAS[0].id, fechaActualizacion: hoyIso() });
+  const base = modeloId ? await modeloDeCatalogo(modeloId) : null;
+  const tipo = base && GRUPO_COSTO_IDS.has(base.tipo) ? base.tipo : "";
+  marcarTipo(GRUPO_COSTO, tipo);
+  escribir({
+    moneda: MONEDAS[0].id,
+    fechaActualizacion: hoyIso(),
+    modelo: base ? base.nombre : ""
+  });
   porId("btn-costo-duplicar").hidden = true;
   prepararDiaCotizacion();
   escribirParametros({}, await cambioDelDia());
@@ -167,6 +191,20 @@ export async function mostrarCostoNuevo() {
   mostrarVista("vista-costo");
   await pintarLineas([]);
   await Promise.all([cargarModelos(), cargarClientesCosto("")]);
+  cambiosGuardados("vista-costo");
+}
+
+/**
+ * @param {string} id
+ * @returns {Promise<object|null>}
+ */
+async function modeloDeCatalogo(id) {
+  try {
+    return await obtenerModelo(id);
+  } catch (error) {
+    registrarError(error, "costo.modeloBase");
+    return null;
+  }
 }
 
 /**
@@ -210,6 +248,7 @@ export async function mostrarCostoCopia(id) {
     cargarModelos(),
     cargarClientesCosto(origen.clienteCotizacion || "")
   ]);
+  cambiosGuardados("vista-costo");
 }
 
 /**
@@ -249,6 +288,7 @@ export async function mostrarCostoEdicion(id) {
     cargarModelos(),
     cargarClientesCosto(registro.clienteCotizacion || "")
   ]);
+  cambiosGuardados("vista-costo");
 }
 
 /**
@@ -290,12 +330,32 @@ function pintarSugerencias() {
 function pintarAyudaModelo() {
   const clave = claveModelo(porId("k-modelo").value);
   const ayuda = porId("k-modelo-ayuda");
+  const enlace = porId("k-modelo-ficha");
+  const hallado = clave
+    ? modelos.find((modelo) => modelo.nombreClave === clave)
+    : null;
+  enlace.hidden = !hallado;
+  if (hallado) {
+    enlace.href = `#/especificacion?id=${encodeURIComponent(hallado.id)}`;
+    if (!leerTipo(GRUPO_COSTO) && GRUPO_COSTO_IDS.has(hallado.tipo)) {
+      marcarTipo(GRUPO_COSTO, hallado.tipo);
+    }
+  }
   if (!clave || !modelos.length) {
     ayuda.textContent = "";
     return;
   }
-  const existe = modelos.some((modelo) => modelo.nombreClave === clave);
-  ayuda.textContent = existe ? CT.modeloCatalogo : CT.modeloLibre;
+  ayuda.textContent = hallado ? CT.modeloCatalogo : CT.modeloLibre;
+}
+
+/**
+ * Sin catálogo cargado no se pregunta: puede ser un error de red.
+ * @param {string} clave
+ * @returns {boolean}
+ */
+function modeloEnCatalogo(clave) {
+  return !modelos.length
+    || modelos.some((modelo) => modelo.nombreClave === clave);
 }
 
 /**
@@ -332,6 +392,7 @@ function prepararDiaCotizacion() {
   const fecha = porId("k-cambio-fecha");
   fecha.max = hoyIso();
   fecha.value = hoyIso();
+  porId("k-fecha").max = hoyIso();
 }
 
 /**
@@ -353,6 +414,8 @@ async function usarCotizacion(iso) {
     porId("k-cambio-uf").value = numeroVisible(dato.uf, 2, true);
   }
   fechaCambio = dato.fecha;
+  cambioReferencia = false;
+  pintarAyudaCambio();
   recalcular();
 }
 
@@ -369,10 +432,23 @@ function escribirParametros(datos, dia) {
   const uf = cambio.uf || (dia && dia.uf) || APP.valorUf;
   if (cambio.usd) fechaCambio = datos.fechaCambio || "";
   else fechaCambio = dia && dia.usd ? dia.fecha : "";
+  cambioReferencia = !cambio.usd && !(dia && dia.usd);
   if (fechaCambio) porId("k-cambio-fecha").value = fechaCambio;
   porId("k-equipos").value = String(datos.cantidadEquipos || 1);
   porId("k-cambio-usd").value = numeroVisible(usd, 2, true);
   porId("k-cambio-uf").value = numeroVisible(uf, 2, true);
+  pintarAyudaCambio();
+}
+
+/**
+ * Dice de dónde salen el dólar y la UF que se usan.
+ * @returns {void}
+ */
+function pintarAyudaCambio() {
+  let texto = CT.cambioManual;
+  if (fechaCambio) texto = textoCambioDia(formatearFecha(fechaCambio));
+  else if (cambioReferencia) texto = CT.cambioReferencia;
+  porId("k-cambio-ayuda").textContent = texto;
 }
 
 /**
@@ -457,6 +533,14 @@ async function guardar(conPdf) {
   );
   pintarErrores(revision);
   if (!revision.valido) return false;
+  if (!modeloEnCatalogo(limpio.modeloClave)
+    && !window.confirm(CT.confirmarModeloLibre)) {
+    return false;
+  }
+  if (componentesSinValor().length
+    && !window.confirm(CT.confirmarSinValor)) {
+    return false;
+  }
   const nuevo = !actual;
   limpio.historial = historialAlGuardar(
     actual,
@@ -468,6 +552,7 @@ async function guardar(conPdf) {
   try {
     const fresco = await guardarCosto(limpio, actual, autor);
     actual = fresco;
+    cambiosGuardados("vista-costo");
     if (conPdf) await descargarCostoPdf(fresco);
     mostrarExito(
       nuevo ? CT.creadoTitulo : CT.actualizadoTitulo,

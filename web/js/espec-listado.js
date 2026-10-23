@@ -11,10 +11,11 @@ import { mensajeError } from "./errores.js";
 import {
   ET,
   FILAS_VISTA,
+  textoAvance,
   textoClientes,
   textoFoto
 } from "./espec-textos.js";
-import { TIPOS_MODELO, etiquetaDe } from "./hw-catalogo.js";
+import { TIPOS_MODELO, avanceFicha, etiquetaDe } from "./hw-catalogo.js";
 import { registrarError } from "./logger.js";
 import {
   descargarCatalogoEspecPdf,
@@ -22,7 +23,7 @@ import {
 } from "./modelo-pdf.js";
 import { listarModelos } from "./modelo-repositorio.js";
 import { llenarFiltroTipo } from "./tipos-equipo.js";
-import { avisar, mostrarVista, porId } from "./ui.js";
+import { avisar, mostrarVista, porId, textoConteo } from "./ui.js";
 
 const ORDEN_TIPO = new Map(TIPOS_MODELO.map((tipo, i) => [tipo.id, i]));
 const DEMORA_CIERRE = 140;
@@ -50,9 +51,11 @@ export function iniciarListadoEspecs() {
   });
   porId("ef-texto").addEventListener("input", pintar);
   porId("ef-tipo").addEventListener("change", pintar);
+  porId("ef-avance").addEventListener("change", pintar);
   porId("btn-espec-limpiar").addEventListener("click", () => {
-    porId("ef-texto").value = "";
-    porId("ef-tipo").value = "";
+    ["ef-texto", "ef-tipo", "ef-avance"].forEach((id) => {
+      porId(id).value = "";
+    });
     pintar();
   });
   porId("btn-espec-modelos").addEventListener("click", () => {
@@ -110,15 +113,29 @@ function filtrados() {
   if (!cache) return [];
   const q = porId("ef-texto").value.trim().toLowerCase();
   const tipo = porId("ef-tipo").value;
+  const avance = porId("ef-avance").value;
   return cache
     .filter((modelo) => !tipo || modelo.tipo === tipo)
-    .filter((modelo) => !q || [modelo.nombre, modelo.otroNombre]
-      .some((valor) => String(valor || "").toLowerCase().includes(q)))
+    .filter((modelo) => !avance || estadoFicha(modelo) === avance)
+    .filter((modelo) => !q || [
+      modelo.nombre,
+      modelo.otroNombre,
+      ...(modelo.clientes || [])
+    ].some((valor) => String(valor || "").toLowerCase().includes(q)))
     .sort((a, b) => {
       const tipoOrden = (ORDEN_TIPO.get(a.tipo) ?? 9)
         - (ORDEN_TIPO.get(b.tipo) ?? 9);
       return tipoOrden || String(a.nombre).localeCompare(b.nombre, "es");
     });
+}
+
+/**
+ * @param {object} modelo
+ * @returns {"completa"|"incompleta"}
+ */
+function estadoFicha(modelo) {
+  const { llenos, total } = avanceFicha(modelo.ficha);
+  return llenos === total ? "completa" : "incompleta";
 }
 
 /**
@@ -130,7 +147,7 @@ function pintar() {
   const lista = filtrados();
   const grid = porId("espec-grid");
   grid.replaceChildren();
-  porId("espec-conteo").textContent = `${lista.length} ${ET.registros}`;
+  porId("espec-conteo").textContent = textoConteo(lista.length, "ficha");
   porId("espec-vacio").hidden = cache.length > 0;
   const estado = porId("espec-estado");
   estado.hidden = lista.length > 0 || cache.length === 0;
@@ -162,14 +179,38 @@ function tarjeta(modelo) {
   clientes.className = "ref-clientes";
   clientes.textContent = textoClientes(modelo.clientes, CLIENTES_VISIBLES);
   clientes.title = (modelo.clientes || []).join(", ");
-  cuerpo.append(tipo, nombre, clientes);
+  cuerpo.append(tipo, nombre, clientes, avanceTarjeta(modelo));
   const acciones = document.createElement("div");
   acciones.className = "ref-acciones";
   acciones.append(
-    boton(ET.abrir, "abrir", modelo.id),
+    boton(ET.editarFicha, "abrir", modelo.id),
     boton(ET.pdf, "pdf", modelo.id)
   );
   caja.append(foto, cuerpo, acciones);
+  return caja;
+}
+
+/**
+ * Barra con los datos completos de la ficha.
+ * @param {object} modelo
+ * @returns {HTMLElement}
+ */
+function avanceTarjeta(modelo) {
+  const { llenos, total } = avanceFicha(modelo.ficha);
+  const completa = llenos === total;
+  const caja = document.createElement("div");
+  caja.className = completa ? "ref-avance completa" : "ref-avance";
+  const texto = document.createElement("span");
+  texto.textContent = completa
+    ? ET.fichaCompleta
+    : textoAvance(llenos, total);
+  const barra = document.createElement("div");
+  barra.className = completa ? "avance-barra completa" : "avance-barra";
+  barra.setAttribute("aria-hidden", "true");
+  const relleno = document.createElement("span");
+  relleno.style.width = `${(llenos / total) * 100}%`;
+  barra.append(relleno);
+  caja.append(texto, barra);
   return caja;
 }
 

@@ -206,7 +206,7 @@ function guardarEnMemoria(limpio, previo, autor) {
     creadoPor: previo && previo.creadoPor
       ? previo.creadoPor
       : autor.uid,
-    creadoPorEmail: previo && previo.creadoPorEmail
+    creadoPorEmail: previo && typeof previo.creadoPorEmail === "string"
       ? previo.creadoPorEmail
       : (autor.email || ""),
     actualizadoEn: ahora,
@@ -234,7 +234,7 @@ function armarPayload(limpio, previo, autor, fsMod) {
     creadoPor: previo && previo.creadoPor
       ? previo.creadoPor
       : autor.uid,
-    creadoPorEmail: previo && previo.creadoPorEmail
+    creadoPorEmail: previo && typeof previo.creadoPorEmail === "string"
       ? previo.creadoPorEmail
       : (autor.email || ""),
     actualizadoEn: fsMod.serverTimestamp(),

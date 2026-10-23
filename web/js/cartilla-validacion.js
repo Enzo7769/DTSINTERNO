@@ -77,13 +77,15 @@ function normalizarFilas(filas) {
 }
 
 /**
- * Un ítem de sección obligatoria entra siempre, salvo los de nombre libre.
+ * Un ítem de sección obligatoria entra siempre, salvo los de nombre
+ * libre y los opcionales (DNS2, Proxy).
  * @param {object} seccion
  * @param {object} item
  * @returns {boolean}
  */
 function obligatoriaFija(seccion, item) {
-  return Boolean(seccion.obligatoria) && !item.nombreLibre;
+  return Boolean(seccion.obligatoria) && !item.nombreLibre
+    && !item.opcional;
 }
 
 /**

@@ -22,6 +22,8 @@ const TXT = {
   faltaLicitacion: "Indica el nombre de la licitación.",
   faltaNombre: "Indica el nombre de quien rellena la ficha.",
   faltaPlazo: "Indica cuántos días o la fecha límite.",
+  sinLetras: "El nombre de la licitación debe tener letras o números.",
+  plazoPasado: "La fecha límite ya pasó. Elige una fecha futura.",
   vencido: "Plazo vencido"
 };
 
@@ -158,23 +160,26 @@ export function normalizarEnvio(crudo) {
     pdfRuta: texto(d.pdfRuta, 200),
     pdfNombre: texto(d.pdfNombre, 120),
     historial: hist
-      .slice(0, APP.maxHistorialFicha)
+      .slice(-APP.maxHistorialFicha)
       .map(itemHistorial)
   };
 }
 
 /**
+ * Revisa un enlace nuevo antes de crearlo.
  * @param {object} crudo
+ * @param {number} [ahora] ms, para las pruebas
  * @returns {{ok: boolean, mensaje: string, datos: object|null}}
  */
-export function validarEnvio(crudo) {
+export function validarEnvio(crudo, ahora = Date.now()) {
+  const fallar = (mensaje) => ({ ok: false, mensaje, datos: null });
+  if (!texto(crudo && crudo.licitacion, 160)) {
+    return fallar(TXT.faltaLicitacion);
+  }
   const datos = normalizarEnvio(crudo);
-  if (!datos.licitacion || datos.licitacion === "Pendiente") {
-    return { ok: false, mensaje: TXT.faltaLicitacion, datos: null };
-  }
-  if (!datos.plazoHasta) {
-    return { ok: false, mensaje: TXT.faltaPlazo, datos: null };
-  }
+  if (!datos.licitacionClave) return fallar(TXT.sinLetras);
+  if (!datos.plazoHasta) return fallar(TXT.faltaPlazo);
+  if (datos.plazoHasta <= ahora) return fallar(TXT.plazoPasado);
   return { ok: true, mensaje: "", datos };
 }
 
@@ -229,6 +234,19 @@ export function etiquetaEstado(envio) {
   if (envioVencido(envio)) return "Vencida";
   if (envio.estado === "en_curso") return "En proceso";
   return "Pendiente";
+}
+
+/**
+ * Clase de color de la etiqueta de estado.
+ * @param {object} envio
+ * @returns {string}
+ */
+export function claseEstado(envio) {
+  if (!envio) return "";
+  if (envio.estado === "finalizado") return "pill-aprobado";
+  if (envioVencido(envio)) return "pill-rechazado";
+  if (envio.estado === "en_curso") return "pill-proceso";
+  return "pill-pendiente";
 }
 
 /**

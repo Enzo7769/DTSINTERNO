@@ -132,6 +132,16 @@ export async function eliminarEnvio(id) {
 }
 
 /**
+ * El historial va del más antiguo al más reciente. Si se llena, se
+ * descartan los más antiguos para que siempre quede lo último.
+ * @param {object[]} lista
+ * @returns {object[]}
+ */
+export function recortarHistorial(lista) {
+  return lista.slice(-APP.maxHistorialFicha);
+}
+
+/**
  * @param {object} datos
  * @param {{uid: string, email: string}} autor
  * @returns {Promise<object>}
@@ -141,10 +151,10 @@ export async function crearEnvio(datos, autor) {
   const token = limpio.token || crearToken();
   limpio.token = token;
   const quien = (autor && autor.email) || "Admin";
-  limpio.historial = [
-    entradaHistorial(quien, "creada"),
-    ...limpio.historial
-  ].slice(0, APP.maxHistorialFicha);
+  limpio.historial = recortarHistorial([
+    ...limpio.historial,
+    entradaHistorial(quien, "creada")
+  ]);
   if (modoMemoria()) {
     return enMemoria(limpio, null, autor, token);
   }
@@ -167,10 +177,10 @@ export async function guardarEnvioAdmin(datos, previo, autor) {
   const limpio = normalizarEnvio({ ...previo, ...datos });
   limpio.token = previo.id || previo.token;
   const quien = (autor && autor.email) || "Admin";
-  limpio.historial = [
+  limpio.historial = recortarHistorial([
     ...((previo && previo.historial) || []),
     entradaHistorial(quien, "guardada")
-  ].slice(0, APP.maxHistorialFicha);
+  ]);
   if (modoMemoria()) {
     return enMemoria(limpio, previo, autor, limpio.token);
   }
@@ -211,10 +221,10 @@ export async function guardarEnvioCliente(
   if (finalizar) limpio.finalizadoEn = Date.now();
   aplicarPdf(limpio, previo, pdf);
   const accion = finalizar ? "finalizada" : "guardada";
-  limpio.historial = [
+  limpio.historial = recortarHistorial([
     ...((previo && previo.historial) || []),
     entradaHistorial(nombre, accion)
-  ].slice(0, APP.maxHistorialFicha);
+  ]);
   if (modoMemoria()) {
     return enMemoria(limpio, previo, {
       uid: "cliente",
@@ -244,11 +254,11 @@ export async function ampliarPlazo(previo, plazoHasta, autor) {
   const extra = previo.estado === "finalizado"
     ? [entradaHistorial(quien, "reabierta")]
     : [];
-  limpio.historial = [
+  limpio.historial = recortarHistorial([
     ...((previo && previo.historial) || []),
     entradaHistorial(quien, "plazo"),
     ...extra
-  ].slice(0, APP.maxHistorialFicha);
+  ]);
   if (modoMemoria()) {
     return enMemoria(limpio, previo, autor, previo.id);
   }
@@ -483,7 +493,7 @@ function enMemoria(limpio, previo, autor, token) {
     creadoPor: previo && previo.creadoPor
       ? previo.creadoPor
       : autor.uid,
-    creadoPorEmail: previo && previo.creadoPorEmail
+    creadoPorEmail: previo && typeof previo.creadoPorEmail === "string"
       ? previo.creadoPorEmail
       : (autor.email || ""),
     actualizadoEn: ahora,

@@ -69,14 +69,19 @@ export function dibujarConfigMenu(ficha) {
     caja.append(vacio());
     return caja;
   }
-  caja.append(
-    vistas(ficha.menu, i),
+  // Simulación a la izquierda; teclado y menú a la derecha, para
+  // ver el cambio mientras se edita.
+  const editor = document.createElement("div");
+  editor.className = "ficha-menu-editor";
+  editor.append(
     teclado(ficha.menu),
-    menuTotem(menus[i], i, ficha)
+    menuTotem(menus[i], i, ficha),
+    acciones([[TXT.guardarTotem, `menu:guardarTotem:${i}`]])
   );
-  caja.append(acciones([
-    [TXT.guardarTotem, `menu:guardarTotem:${i}`]
-  ]));
+  const dos = document.createElement("div");
+  dos.className = "ficha-menu-dos";
+  dos.append(vistas(ficha.menu, i), editor);
+  caja.append(dos);
   return caja;
 }
 
@@ -349,6 +354,24 @@ function menuTotem(fila, i, ficha) {
 }
 
 /**
+ * Número en círculo, campo y «Quitar» en una sola línea.
+ * @param {string} numero 1, 1.1…
+ * @param {HTMLInputElement} input
+ * @param {HTMLButtonElement} quitar
+ * @returns {HTMLElement}
+ */
+function filaTramite(numero, input, quitar) {
+  const fila = document.createElement("div");
+  fila.className = "ficha-tramite-fila";
+  const nro = document.createElement("span");
+  nro.className = "ficha-num";
+  nro.textContent = numero;
+  input.setAttribute("aria-label", `Trámite ${numero}`);
+  fila.append(nro, input, quitar);
+  return fila;
+}
+
+/**
  * @param {object} item
  * @param {number} i
  * @param {number} t
@@ -357,33 +380,19 @@ function menuTotem(fila, i, ficha) {
 function tramite(item, i, t) {
   const caja = document.createElement("div");
   caja.className = "ficha-menu-tramite";
-  const linea = document.createElement("div");
-  linea.className = "ficha-linea";
-  const lab = document.createElement("label");
-  lab.className = "campo";
-  const span = document.createElement("span");
-  span.textContent = String(t + 1);
-  lab.append(
-    span,
-    campo(item.texto, `menu.totems.${i}.tramites.${t}.texto`, 80)
-  );
-  linea.append(lab, boton(TXT.quitar, `menu:quitarTramite:${i}:${t}`));
-  caja.append(linea);
+  caja.append(filaTramite(
+    String(t + 1),
+    campo(item.texto, `menu.totems.${i}.tramites.${t}.texto`, 80),
+    boton(TXT.quitar, `menu:quitarTramite:${i}:${t}`)
+  ));
   const subs = document.createElement("div");
   subs.className = "ficha-menu-subs";
   (item.hijos || []).forEach((hijo, h) => {
-    const fila = document.createElement("div");
-    fila.className = "ficha-linea";
-    const et = document.createElement("label");
-    et.className = "campo";
-    const nro = document.createElement("span");
-    nro.textContent = `${t + 1}.${h + 1}`;
-    et.append(
-      nro,
-      campo(hijo, `menu.totems.${i}.tramites.${t}.hijos.${h}`, 80)
-    );
-    fila.append(et, boton(TXT.quitar, `menu:quitarHijo:${i}:${t}:${h}`));
-    subs.append(fila);
+    subs.append(filaTramite(
+      `${t + 1}.${h + 1}`,
+      campo(hijo, `menu.totems.${i}.tramites.${t}.hijos.${h}`, 80),
+      boton(TXT.quitar, `menu:quitarHijo:${i}:${t}:${h}`)
+    ));
   });
   caja.append(subs);
   caja.append(acciones([[
@@ -402,7 +411,14 @@ function bloque(numero, titulo) {
   const nodo = document.createElement("section");
   nodo.className = "tarjeta ficha-bloque";
   const h2 = document.createElement("h2");
-  h2.textContent = numero ? `${numero}. ${titulo}` : titulo;
+  h2.className = "ficha-bloque-titulo";
+  if (numero) {
+    const num = document.createElement("span");
+    num.className = "ficha-num";
+    num.textContent = numero;
+    h2.append(num);
+  }
+  h2.append(document.createTextNode(titulo));
   nodo.append(h2);
   return nodo;
 }
@@ -471,12 +487,14 @@ function boton(texto, accion) {
   const primario = accion.includes("guardarTotem");
   const nodo = document.createElement("button");
   nodo.type = "button";
+  const sumar = /:sumar/.test(accion);
   nodo.className = primario
     ? "boton"
     : accion.includes("quitar")
       ? "boton boton-secundario ficha-quitar"
       : "boton boton-secundario";
-  nodo.textContent = texto;
+  if (sumar) nodo.classList.add("ficha-agregar");
+  nodo.textContent = sumar ? `+ ${texto}` : texto;
   nodo.dataset.accion = accion;
   return nodo;
 }
