@@ -3739,3 +3739,258 @@ td.acciones .boton {
 
   .menu-cerrado .btn-menu .btn-menu-texto { display: inline; }
 }
+
+/* Costo: totales siempre visibles en la barra de guardar. */
+.barra-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 18px;
+  margin-left: auto;
+  padding: 6px 14px;
+  background: var(--azul-profundo);
+  color: #ffffff;
+  border-radius: 12px;
+}
+
+.barra-resumen span { display: grid; line-height: 1.15; }
+
+.barra-resumen small { font-size: 11px; opacity: 0.75; }
+
+.barra-resumen strong { font-size: 15px; font-variant-numeric: tabular-nums; }
+
+.barra-aviso {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  color: #ffd27a;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.barra-aviso::before { content: "⚠ "; }
+
+/* ==========================================================
+   Resumen de costos (gerencia)
+   ========================================================== */
+
+.cr-kpis .kpi strong { font-size: 24px; }
+
+.cr-kpis .kpi small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.cr-columna { display: grid; gap: 14px; }
+
+.cr-columna > .tarjeta { margin-bottom: 0; }
+
+.cr-panel h2 { font-size: 17px; margin-bottom: 2px; }
+
+.cr-panel > .ayuda { margin-bottom: 12px; font-size: 13px; }
+
+/* Barras horizontales: nombre a la izquierda, barra fina y valor. */
+.cr-barras { display: grid; gap: 2px; }
+
+.cr-fila {
+  display: grid;
+  grid-template-columns: minmax(120px, 34%) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 6px 6px;
+  border-radius: 8px;
+  outline: none;
+}
+
+.cr-fila:hover,
+.cr-fila:focus-visible { background: #f2f7fa; }
+
+.cr-nombre { display: grid; line-height: 1.2; min-width: 0; }
+
+.cr-nombre strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.cr-nombre small { color: var(--tinta-suave); font-size: 12px; }
+
+.cr-pista {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cr-barra {
+  display: block;
+  height: 12px;
+  min-width: 2px;
+  background: #2a78d6;
+  border-radius: 0 4px 4px 0;
+}
+
+.cr-fila:hover .cr-barra,
+.cr-fila:focus-visible .cr-barra { background: #1c5cab; }
+
+.cr-valor {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+}
+
+/* Composición: barra 100 % con 2px de separación entre tramos. */
+.cr-apilada {
+  display: flex;
+  gap: 2px;
+  height: 22px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+.cr-apilada span { min-width: 3px; outline: none; }
+
+.cr-apilada span:focus-visible { box-shadow: inset 0 0 0 2px #0b0b0b; }
+
+.cr-leyenda { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+
+.cr-leyenda li {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto 56px;
+  gap: 8px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.cr-leyenda i { width: 12px; height: 12px; border-radius: 3px; }
+
+.cr-leyenda small { color: var(--tinta-suave); font-variant-numeric: tabular-nums; }
+
+.cr-leyenda strong { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Alertas por grupo, con ícono y texto (no solo color). */
+.cr-alertas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cr-alerta-grupo {
+  padding: 12px 14px;
+  border: 1px solid var(--linea);
+  border-left: 4px solid var(--aviso);
+  border-radius: 12px;
+  background: #fffdf7;
+}
+
+.cr-alerta-sinCosto { border-left-color: var(--azul); background: #f7fbfd; }
+
+.cr-alerta-sinCatalogo { border-left-color: var(--mal); background: #fffafa; }
+
+.cr-alerta-grupo h3 { margin: 0 0 6px; font-size: 14px; }
+
+.cr-alerta-grupo h3::before { content: "⚠ "; color: var(--aviso); }
+
+.cr-alerta-sinCosto h3::before { content: "＋ "; color: var(--azul); }
+
+.cr-alerta-sinCatalogo h3::before { content: "✕ "; color: var(--mal); }
+
+.cr-alerta-grupo ul { margin: 0; padding-left: 16px; font-size: 13px; }
+
+.cr-alerta-grupo li { margin: 3px 0; }
+
+.cr-alerta-grupo a { color: var(--tinta); }
+
+.cr-alerta-grupo a:hover { color: var(--azul); }
+
+.cr-alerta-grupo:not(.abierto) .cr-extra { display: none; }
+
+.cr-mas { margin-top: 6px; padding: 4px 10px; font-size: 12px; }
+
+/* Tabla de detalle. */
+.cr-tabla th { white-space: nowrap; }
+
+.cr-tabla td { vertical-align: middle; }
+
+.cr-tabla td.derecha { font-variant-numeric: tabular-nums; }
+
+.cr-sube { color: #b42318; font-weight: 700; }
+
+.cr-baja { color: #0f7a45; font-weight: 700; }
+
+.cr-vencido { color: var(--aviso); font-weight: 600; }
+
+.cr-vencido::before { content: "⚠ "; }
+
+.cr-tooltip {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  gap: 2px;
+  max-width: 280px;
+  padding: 8px 10px;
+  background: #0b2533;
+  color: #ffffff;
+  border-radius: 8px;
+  box-shadow: var(--sombra);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.cr-tooltip strong { font-size: 13px; }
+
+@media (max-width: 1100px) {
+  .cr-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .cr-fila { grid-template-columns: 1fr; gap: 4px; }
+}
+
+.cr-nombre strong { white-space: normal; overflow: visible; }
+
+.cr-fila { grid-template-columns: minmax(130px, 38%) minmax(0, 1fr); }
+
+table.cr-tabla { font-size: 14px; }
+
+table.cr-tabla th,
+table.cr-tabla td {
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--linea);
+  font-size: 14px;
+}
+
+table.cr-tabla th {
+  background: #f6f9fb;
+  font-size: 12px;
+  color: var(--tinta-suave);
+}
+
+table.cr-tabla tbody tr:hover td { background: #f7fbfd; }
+
+table.cr-tabla td:last-child { text-align: right; }
+
+table.cr-tabla .boton { padding: 6px 10px; font-size: 13px; }
+
+.marca-vigente { margin-left: 8px; font-size: 11px; vertical-align: middle; }
+
+tr.fila-anterior td { color: var(--tinta-suave); }
+
+tr.fila-anterior td.fuerte { font-weight: 600; }
+
+.marca-anterior { background: var(--papel); color: var(--tinta-suave); }
+
+.marca-vigente { display: inline-block; margin: 2px 0 0 6px; }

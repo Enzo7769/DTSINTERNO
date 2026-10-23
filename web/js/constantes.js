@@ -172,6 +172,12 @@ export const MODULOS = [
     habilitado: true,
     hijos: [
       {
+        id: "resumen-costos",
+        etiqueta: "Resumen de costos",
+        rutas: ["/costos-resumen"],
+        destino: "#/costos-resumen"
+      },
+      {
         id: "modelos-hw",
         etiqueta: "Modelos",
         rutas: ["/modelos", "/modelo"],

@@ -36,6 +36,14 @@ import {
 } from "../web/js/modelo-validacion.js";
 import { fechaValida, formatearFecha } from "../web/js/fechas.js";
 import {
+  alertas as alertasCostos,
+  composicion,
+  enUsd,
+  filasResumen,
+  indicadores,
+  variacion as variacionCosto
+} from "../web/js/costo-resumen.js";
+import {
   claveLicitacion,
   validarFicha
 } from "../web/js/ficha-validacion.js";
@@ -1087,6 +1095,44 @@ afirmar(
     && rutConPuntos("123456785") === "12.345.678-5"
     && rutConPuntos("1") === "1",
   "el ticket simulado lleva letra del trámite y RUT con puntos"
+);
+
+const REF = { usd: 1000, uf: 40000 };
+const costoBase = {
+  id: "a", modelo: "T1", modeloClave: "T1", linea: "cleverq",
+  tipoEquipo: "totem", moneda: "CLP", costo: 2000000,
+  tipoCambio: { usd: 800, uf: 0 }, fechaActualizacion: "2026-01-10",
+  numero: 1, lineas: []
+};
+const filasR = filasResumen([
+  costoBase,
+  { ...costoBase, id: "b", numero: 2, moneda: "USD", costo: 2600,
+    fechaActualizacion: "2026-09-01", tipoCambio: {} },
+  { ...costoBase, id: "c", modelo: "V1", modeloClave: "V1",
+    moneda: "UF", costo: 10, tipoCambio: {}, fechaActualizacion: "" }
+], REF, "2026-10-23");
+afirmar(
+  enUsd(2000000, costoBase, REF) === 2500
+    && filasR.length === 2
+    && filasR[0].id === "b" && filasR[0].cotizaciones === 2
+    && filasR[1].usd === 400 && filasR[1].dias === Infinity
+    && indicadores(filasR, 3).promedio === 1500,
+  "el resumen usa la cotización vigente de cada modelo, en dólares"
+);
+afirmar(
+  variacionCosto({ historial: [
+    { costo: 1000, moneda: "USD" },
+    { costo: 1100, moneda: "USD" }
+  ] }, REF).pct === 10
+    && variacionCosto({ historial: [] }, REF) === null
+    && composicion([{ ...costoBase, moneda: "USD", tipoCambio: {},
+      lineas: [{ categoria: "dispositivos", subtotalCosto: 30 },
+        { categoria: "arneses", subtotalCosto: 10 }] }], REF)
+      .partes[0].pct === 75
+    && alertasCostos(filasR, [], [{ id: "m", nombre: "Z",
+      nombreClave: "Z", tipo: "totem" }])
+      .some((a) => a.tipo === "sinCosto"),
+  "el resumen calcula variación, composición y alertas"
 );
 
 if (fallos > 0) {

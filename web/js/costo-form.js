@@ -30,6 +30,7 @@ import {
   pintarPestanas
 } from "./costo-hoja.js";
 import {
+  componentesSinValor,
   leerLineas,
   numeroVisible,
   pintarAyudaCosteo,
@@ -534,6 +535,10 @@ async function guardar(conPdf) {
   if (!revision.valido) return false;
   if (!modeloEnCatalogo(limpio.modeloClave)
     && !window.confirm(CT.confirmarModeloLibre)) {
+    return false;
+  }
+  if (componentesSinValor().length
+    && !window.confirm(CT.confirmarSinValor)) {
     return false;
   }
   const nuevo = !actual;

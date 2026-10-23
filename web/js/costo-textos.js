@@ -72,6 +72,10 @@ export const CT = {
   resumenCategorias: "Resumen por categoría",
   costoEquipo: "Costo por equipo",
   costoLote: "Costo total del lote",
+  lote: "Lote",
+  confirmarSinValor:
+    "Hay componentes marcados sin valor unitario: no suman al costo. "
+    + "¿Guardar igual?",
   equivale: "Equivale a",
   sinCambio: "sin tipo de cambio",
   comoUsar: "¿Cómo se usa esta hoja de costeo?",
@@ -157,6 +161,10 @@ export const CT = {
   importando: "Importando…",
   sinDatos: "No hay datos para exportar.",
   verModelo: "Ver modelo",
+  vigente: "Vigente",
+  anterior: "Anterior",
+  anteriorTitulo:
+    "Cotización anterior: hay una más reciente de este modelo y línea.",
   modeloCatalogo: "Modelo del catálogo.",
   modeloLibre:
     "No está en el catálogo. Créalo en «Modelos» para ver su "
@@ -256,6 +264,16 @@ export const AYUDA_COSTEO = [
       + "HH, la tabla se suma sola."
   }
 ];
+
+/**
+ * @param {number} n componentes marcados sin precio
+ * @returns {string}
+ */
+export function textoSinValor(n) {
+  return n === 1
+    ? "1 componente marcado no tiene valor unitario."
+    : `${n} componentes marcados no tienen valor unitario.`;
+}
 
 /**
  * @param {number} n equipos del lote

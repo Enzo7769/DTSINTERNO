@@ -600,6 +600,105 @@
         </div>
       </section>
 
+      <section id="vista-costos-resumen" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Costos hardware</p>
+            <h1>Resumen de costos</h1>
+            <p class="ayuda">
+              Cotización vigente de cada modelo, expresada en dólares
+              con el tipo de cambio guardado en cada costo.
+            </p>
+          </div>
+          <div class="grupo-botones">
+            <button
+              id="btn-cr-csv"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Exportar CSV
+            </button>
+            <a class="boton" href="#/costos">Ver base de costos</a>
+          </div>
+        </header>
+        <form id="form-filtros-cr" class="filtros">
+          <label class="campo">
+            <span>Línea de producto</span>
+            <select id="cr-linea" data-sin-cambios>
+              <option value="">Todas</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Tipo de equipo</span>
+            <select id="cr-tipo" data-sin-cambios>
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <button
+            id="btn-cr-limpiar"
+            class="boton boton-secundario"
+            type="button"
+          >
+            Limpiar filtros
+          </button>
+        </form>
+        <p id="cr-estado" class="estado-lista" hidden></p>
+        <div id="cr-contenido">
+          <div id="cr-kpis" class="kpis cr-kpis"></div>
+          <div class="cr-grid">
+            <section class="tarjeta cr-panel">
+              <h2>Costo por equipo, por modelo</h2>
+              <p class="ayuda">
+                Cotización vigente de cada modelo y línea, de mayor a
+                menor (US$).
+              </p>
+              <div id="cr-barras" class="cr-barras"></div>
+            </section>
+            <div class="cr-columna">
+              <section class="tarjeta cr-panel">
+                <h2>¿En qué se va el costo?</h2>
+                <p id="cr-comp-ayuda" class="ayuda"></p>
+                <div id="cr-composicion"></div>
+              </section>
+              <section class="tarjeta cr-panel">
+                <h2>Promedio por línea de producto</h2>
+                <p class="ayuda">Costo por equipo promedio (US$).</p>
+                <div id="cr-lineas" class="cr-barras"></div>
+              </section>
+            </div>
+          </div>
+          <section class="tarjeta cr-panel">
+            <div class="cabeza-seccion">
+              <h2>Requiere atención</h2>
+              <span id="cr-alertas-cuenta" class="pill"></span>
+            </div>
+            <div id="cr-alertas" class="cr-alertas"></div>
+          </section>
+          <section class="tarjeta cr-panel">
+            <h2>Detalle por modelo</h2>
+            <div class="tabla-wrap">
+              <table class="cr-tabla">
+                <thead>
+                  <tr>
+                    <th>Modelo</th>
+                    <th>Línea</th>
+                    <th>Tipo</th>
+                    <th class="derecha">Costo por equipo (US$)</th>
+                    <th class="derecha">Costo original</th>
+                    <th>Variación</th>
+                    <th>Actualizado</th>
+                    <th class="derecha">Cotizaciones</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="cr-cuerpo"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+        <div id="cr-tooltip" class="cr-tooltip" role="tooltip" hidden></div>
+      </section>
+
       <section id="vista-costos" class="vista" hidden>
         <header class="encabezado">
           <div>
@@ -673,6 +772,7 @@
                 <th>Tipo</th>
                 <th>Modelo</th>
                 <th class="derecha">Costo</th>
+                <th>Variación</th>
                 <th>Actualizado</th>
                 <th>Acciones</th>
               </tr>
@@ -949,6 +1049,25 @@
           >
             Duplicar como costo nuevo
           </button>
+          <div
+            id="costo-barra-resumen"
+            class="barra-resumen"
+            aria-live="polite"
+          >
+            <span>
+              <small>Por equipo</small>
+              <strong id="costo-barra-equipo">—</strong>
+            </span>
+            <span>
+              <small id="costo-barra-lote-titulo">Lote</small>
+              <strong id="costo-barra-lote">—</strong>
+            </span>
+            <span>
+              <small>Componentes</small>
+              <strong id="costo-barra-items">0</strong>
+            </span>
+            <p id="costo-barra-aviso" class="barra-aviso" hidden></p>
+          </div>
         </div>
       </section>
 

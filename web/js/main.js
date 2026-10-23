@@ -12,6 +12,10 @@
 
 import { permitirCambioRuta } from "./cambios-pendientes.js";
 import {
+  invalidarResumenCostos,
+  mostrarResumenCostos
+} from "./costo-resumen-vista.js";
+import {
   definirAutorCartilla,
   iniciarCartilla,
   mostrarCartillaEdicion,
@@ -259,7 +263,10 @@ function asegurarUi() {
   iniciarListado();
   iniciarCartilla(() => invalidarCartillas());
   iniciarListadoCartillas();
-  iniciarCosto(() => invalidarCostos());
+  iniciarCosto(() => {
+    invalidarCostos();
+    invalidarResumenCostos();
+  });
   iniciarListadoCostos();
   iniciarModelo(() => {
     invalidarModelos();
@@ -324,6 +331,10 @@ async function enrutar() {
     const id = ruta.params.get("id") || "";
     if (id) await mostrarCartillaEdicion(id);
     else await mostrarCartillaNueva();
+    return;
+  }
+  if (ruta.path === "/costos-resumen") {
+    await mostrarResumenCostos();
     return;
   }
   if (ruta.path === "/costos") {
