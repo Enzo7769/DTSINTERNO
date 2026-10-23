@@ -52,6 +52,9 @@ Hazlo en un computador; desde el celular el editor es incómodo.
    - Abajo, en el **Registro de ejecución**, verás el texto del correo.
 6. **Prueba enviando:** elige `enviarRecordatorio` y toca **Ejecutar**.
    Te llega el correo si hay retiros atrasados, de hoy o próximos.
+   Para ver cómo se ve con varios locales sin cargar datos falsos en
+   Firebase, ejecuta `probarConEjemplos`: manda un correo marcado
+   «[PRUEBA]» con locales inventados.
 7. **Activa el envío diario:** elige `instalarRecordatorioDiario` y toca
    **Ejecutar**. Listo: desde mañana llega solo cada día.
 

@@ -98,6 +98,63 @@ function vistaPrevia() {
   console.log(`${correo.asunto}\n\n${correo.texto}`);
 }
 
+/**
+ * Manda un correo de PRUEBA con locales inventados, para ver cómo se
+ * ve con varios retiros. No lee ni cambia Firestore.
+ * @returns {void}
+ */
+function probarConEjemplos() {
+  const hoy = Utilities.formatDate(new Date(), CONFIG.zona, "yyyy-MM-dd");
+  const r = retirosPorFecha(localesDeEjemplo(hoy), hoy, CONFIG.diasAviso);
+  // Sin enlace: los locales de ejemplo no existen en la página.
+  const correo = armarCorreo(r, hoy, { ...CONFIG, enlace: "" });
+  const para = CONFIG.destinatarios.length
+    ? CONFIG.destinatarios.join(",")
+    : Session.getEffectiveUser().getEmail();
+  MailApp.sendEmail({
+    to: para,
+    subject: `[PRUEBA] ${correo.asunto}`,
+    body: correo.texto,
+    htmlBody: correo.html,
+    name: "DTS · Recepción de equipos"
+  });
+  console.log(`Correo de prueba enviado a ${para}: ${correo.asunto}`);
+}
+
+/**
+ * Locales inventados con retiros atrasados, de hoy, próximos y uno
+ * lejano (que no debe aparecer).
+ * @param {string} hoy AAAA-MM-DD
+ * @returns {object[]}
+ */
+function localesDeEjemplo(hoy) {
+  const dia = (n) => {
+    const fecha = new Date(`${hoy}T12:00:00Z`);
+    fecha.setUTCDate(fecha.getUTCDate() + n);
+    return fecha.toISOString().slice(0, 10);
+  };
+  return [
+    ["LID08", "Líder Talca", "Talca", -6, 1, "Starken"],
+    ["LID15", "Líder Chillán", "Chillán", -3, 2, "Chilexpress"],
+    ["LID21", "Líder Iquique", "Iquique", -1, 1, ""],
+    ["LID10", "Líder Temuco", "Temuco", 0, 2, "Starken"],
+    ["LID03", "Líder Puente Alto", "Puente Alto", 0, 1, "Camión propio"],
+    ["LID11", "Líder Puerto Montt", "Puerto Montt", 1, 1, ""],
+    ["LID05", "Líder Viña del Mar", "Viña del Mar", 2, 3, "Chilexpress"],
+    ["LID14", "Líder Punta Arenas", "Punta Arenas", 3, 1, "Blue Express"],
+    ["LID09", "Líder Concepción", "Concepción", 10, 2, ""]
+  ].map(([codigo, nombre, comuna, n, equipos, transportista]) => ({
+    id: codigo,
+    codigo,
+    nombre,
+    comuna,
+    contrato: "Walmart Líder",
+    transportista,
+    retiroProgramado: dia(n),
+    equipos: Array.from({ length: equipos }, () => ({ etapa: "pendiente" }))
+  }));
+}
+
 /* ===================== Leer Firestore ===================== */
 
 /**
