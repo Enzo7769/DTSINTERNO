@@ -3994,3 +3994,58 @@ tr.fila-anterior td.fuerte { font-weight: 600; }
 .marca-anterior { background: var(--papel); color: var(--tinta-suave); }
 
 .marca-vigente { display: inline-block; margin: 2px 0 0 6px; }
+
+/* Resumen de costos impreso: solo el informe, sin menú ni controles. */
+@media print {
+  body.imprimir-resumen { background: #ffffff; }
+  body.imprimir-resumen .sidebar,
+  body.imprimir-resumen #aviso-demo,
+  body.imprimir-resumen .encabezado .grupo-botones,
+  body.imprimir-resumen #form-filtros-cr,
+  body.imprimir-resumen .cr-mas,
+  body.imprimir-resumen .cr-tabla td:last-child,
+  body.imprimir-resumen .cr-tabla th:last-child { display: none !important; }
+  body.imprimir-resumen .app { display: block; }
+  body.imprimir-resumen .contenido { padding: 0; }
+  body.imprimir-resumen .cr-grid { grid-template-columns: 1.3fr 1fr; }
+  body.imprimir-resumen .cr-extra { display: list-item !important; }
+  body.imprimir-resumen .tarjeta,
+  body.imprimir-resumen .kpi { break-inside: avoid; box-shadow: none; }
+  body.imprimir-resumen * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+@media print {
+  body.imprimir-resumen .cr-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  body.imprimir-resumen .cr-grid {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) !important;
+  }
+  body.imprimir-resumen .cr-fila {
+    grid-template-columns: minmax(110px, 38%) minmax(0, 1fr) !important;
+    padding: 3px 4px;
+  }
+  body.imprimir-resumen .cr-alertas {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  body.imprimir-resumen .encabezado {
+    flex-direction: row !important;
+  }
+  body.imprimir-resumen #cr-emitido { display: block !important; }
+}
+
+#cr-emitido { display: none; margin-top: 4px; font-size: 12px; }
+
+@media print {
+  body.imprimir-resumen .cr-kpis .kpi strong { font-size: 18px; }
+  body.imprimir-resumen .tabla-wrap { overflow: visible; }
+  body.imprimir-resumen table.cr-tabla th,
+  body.imprimir-resumen table.cr-tabla td {
+    padding: 5px 6px;
+    font-size: 10.5px;
+  }
+  body.imprimir-resumen table.cr-tabla th { font-size: 9px; }
+}

@@ -134,6 +134,7 @@ function iniciar() {
     pintar();
   });
   porId("btn-cr-csv").addEventListener("click", exportar);
+  porId("btn-cr-imprimir").addEventListener("click", imprimir);
   const vista = porId("vista-costos-resumen");
   vista.addEventListener("pointermove", moverTooltip);
   vista.addEventListener("pointerleave", ocultarTooltip);
@@ -504,6 +505,29 @@ function mostrarTooltipDe(objetivo, x, y) {
 function ocultarTooltip() {
   const tip = document.getElementById("cr-tooltip");
   if (tip) tip.hidden = true;
+}
+
+/**
+ * Impresión limpia del resumen (o «Guardar como PDF» del navegador).
+ * @returns {void}
+ */
+function imprimir() {
+  ocultarTooltip();
+  const linea = porId("cr-linea");
+  const tipo = porId("cr-tipo");
+  const filtro = [
+    linea.value ? linea.selectedOptions[0].textContent : "",
+    tipo.value ? tipo.selectedOptions[0].textContent : ""
+  ].filter(Boolean).join(" · ");
+  porId("cr-emitido").textContent = `DTS Autoservicio SpA · Emitido el `
+    + `${formatearFecha(hoyIso())}${filtro ? ` · Filtro: ${filtro}` : ""}`;
+  document.body.classList.add("imprimir-resumen");
+  const quitar = () => {
+    document.body.classList.remove("imprimir-resumen");
+    window.removeEventListener("afterprint", quitar);
+  };
+  window.addEventListener("afterprint", quitar);
+  window.print();
 }
 
 /**
