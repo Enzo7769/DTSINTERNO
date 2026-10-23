@@ -215,7 +215,42 @@ archivo no está en el repositorio: mientras falte, se muestra una
 pantalla de descanso animada con la marca. Para usar el video real,
 cópialo en esa ruta.
 
+## Recepción de equipos
+
+Rutas `#/recepcion` (panel) y `#/recepcion-local?id=<id>` (local).
+Sirve para recibir en bodega los equipos que vuelven al terminar un
+contrato (por ejemplo, Walmart Líder, locales LID01, LID02…).
+
+- **Colección** `recepcionLocales`: un documento por local con su
+  contrato, código, nombre, región (las 16 de Chile), comuna,
+  dirección, contacto, retiro programado, transportista, guía de
+  despacho, notas y sus equipos (hasta 20). Reglas en
+  `firestore.rules` (`localRecepcionValido`); el código no se repite
+  dentro de un contrato.
+- **Etapas por equipo:** Pendiente de retiro → En tránsito → Recibido
+  en bodega → Revisado. Al pasar a Recibido se proponen la fecha de
+  hoy y quien recibe. La etapa del local es la de su equipo más
+  atrasado.
+- **Revisión por componente** (`web/js/recepcion-catalogo.js`):
+  estructura, pantalla y touch, computador (placa/mini PC, disco,
+  RAM, fuente), periféricos (impresora, lector, parlantes) y
+  conexiones (cables, router/BAM, UPS). Cada uno OK, Dañado, Falta o
+  No aplica, con nota si hay problema; más «¿Enciende?». Resultado:
+  Incompleto si falta algo, Con daños si algo está dañado o no
+  enciende, si no Completo y OK. Para guardar un equipo como Revisado
+  hay que evaluar todos sus componentes.
+- **Panel:** recibidos y revisados, avance por región (norte a sur),
+  novedades para reclamar (qué componente falta o vino dañado y en
+  qué locales), filtros, CSV por equipo y «Recibir rápido» por N° de
+  serie o código de local.
+- **Importar desde Excel:** copiar las filas con encabezados (Código,
+  Nombre, Región, Comuna, Dirección, Equipos, Modelo, Serie, Tipo) y
+  pegarlas. La región se reconoce como «RM», «13», «Valparaíso»,
+  «Región del Biobío», «VIII»… Se muestra un resumen antes de
+  importar y se omiten los códigos que ya existen.
+- Lógica pura y probada en `web/js/recepcion-datos.js`.
+
 ## Módulos siguientes
 
-El menú ya reserva Recepción de equipos y Usuarios. Esos accesos
-están desactivados hasta que se construyan.
+El menú ya reserva Usuarios. Ese acceso está desactivado hasta que
+se construya.

@@ -133,7 +133,9 @@ function filaBase(categoria, origen, celdaConcepto, linea) {
   tr.dataset.origen = origen;
   const moneda = linea.moneda || MONEDA_LINEA;
   const valor = linea.valor
-    ? numeroVisible(linea.valor, decimalesDe(moneda), true)
+    ? (moneda === "UF"
+      ? numeroVisible(linea.valor, 4)
+      : numeroVisible(linea.valor, decimalesDe(moneda), true))
     : "";
   const marca = document.createElement("td");
   const casilla = document.createElement("input");
@@ -321,7 +323,8 @@ export function pintarSubtotales(crudo, cambio) {
         celda,
         linea.subtotalCosto,
         crudo.moneda,
-        cambio
+        cambio,
+        { moneda: linea.moneda, valor: linea.subtotal }
       );
     }
     const previo = totales.get(tr.dataset.categoria) || { n: 0, total: 0 };
@@ -409,27 +412,38 @@ function pintarBarraResumen(limpio) {
 export function componentesSinValor() {
   return [...porId("costo-lineas").querySelectorAll(SELECTOR_FILA)]
     .filter((tr) => tr.dataset.categoria !== "manoObra")
-    .filter((tr) => incluida(tr)
-      && !(leerMonto(valorDe(tr, "valor"), 4) > 0));
+    .filter((tr) => {
+      // Con los decimales de su moneda: $0,4 se guarda como $0.
+      const moneda = valorDe(tr, "moneda");
+      const dec = moneda === "UF" ? 4 : decimalesDe(moneda);
+      return incluida(tr) && !(leerMonto(valorDe(tr, "valor"), dec) > 0);
+    });
 }
 
 /**
- * Monto en dólares y, debajo, en pesos.
+ * Monto en la moneda del costo y, debajo, su equivalente. Si la línea
+ * se cotizó en otra moneda, debajo va lo que se escribió (sin
+ * convertir de ida y vuelta, que cambiaría los pesos).
  * @param {HTMLElement} caja
- * @param {number} valor
- * @param {string} moneda
+ * @param {number} valor en la moneda del costo
+ * @param {string} moneda del costo
  * @param {{usd: number, uf: number}} cambio
+ * @param {{moneda: string, valor: number}} [propio] monto cotizado
  * @returns {void}
  */
-function pintarMontoPar(caja, valor, moneda, cambio) {
-  const pares = parUsdClp(valor, moneda, cambio);
-  const lista = pares.length
-    ? pares
-    : [{ moneda, valor: Number(valor) || 0 }];
+function pintarMontoPar(caja, valor, moneda, cambio, propio) {
+  const principal = { moneda, valor: Number(valor) || 0 };
+  const otros = propio && propio.moneda !== moneda
+    ? [propio]
+    : parUsdClp(valor, moneda, cambio)
+      .filter((item) => item.moneda !== moneda);
+  const lista = moneda ? [principal, ...otros] : otros;
   caja.replaceChildren(...lista.map((item, indice) => {
     const nodo = document.createElement("span");
     if (indice > 0) nodo.className = "monto-par";
-    nodo.textContent = formatoMonto(item.valor, item.moneda);
+    // La UF se muestra con hasta 4 decimales, como se calcula.
+    nodo.textContent = formatoMonto(item.valor, item.moneda,
+      item.moneda === "UF" ? 4 : 0);
     return nodo;
   }));
 }

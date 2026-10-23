@@ -345,6 +345,39 @@ service cloud.firestore {
         && auditoriaIntacta();
     }
 
+    function localRecepcionValido() {
+      let d = request.resource.data;
+      return d.plantilla == "recepcion-local-v1"
+        && textoHasta(d.contrato, 80)
+        && d.contrato.size() > 0
+        && textoHasta(d.codigo, 20)
+        && d.codigo.size() > 0
+        && textoHasta(d.codigoClave, 20)
+        && textoHasta(d.nombre, 120)
+        && d.region in ["AP", "TA", "AN", "AT", "CO", "VA", "RM", "LI",
+          "ML", "NB", "BI", "AR", "LR", "LL", "AI", "MA"]
+        && textoHasta(d.comuna, 60)
+        && textoHasta(d.direccion, 160)
+        && textoHasta(d.contacto, 120)
+        && textoHasta(d.retiroProgramado, 10)
+        && textoHasta(d.transportista, 80)
+        && textoHasta(d.guia, 40)
+        && textoHasta(d.notas, 600)
+        && d.equipos is list
+        && d.equipos.size() <= 20
+        && auditoriaValida(d);
+    }
+
+    match /recepcionLocales/{id} {
+      allow read, delete: if esAdmin();
+      allow create: if esAdmin()
+        && localRecepcionValido()
+        && request.resource.data.creadoPor == request.auth.uid;
+      allow update: if esAdmin()
+        && localRecepcionValido()
+        && auditoriaIntacta();
+    }
+
     match /modelosHw/{id} {
       allow read, delete: if esAdmin();
       allow create: if esAdmin()

@@ -348,7 +348,7 @@ function marca(texto, clase) {
 function celdaVariacion(registro) {
   const td = document.createElement("td");
   td.className = "nowrap";
-  const v = variacion(registro, cambioDia || {});
+  const v = variacion(registro);
   if (!v || v.pct === 0) {
     td.textContent = v ? "= 0 %" : "—";
     return td;

@@ -32,6 +32,8 @@ export const APP = {
   /** Recetas de cliente creadas desde la base de costos. */
   coleccionClientesCotizacion: "clientesCotizacion",
   plantillaClienteCotizacion: "cliente-cotizacion-v1",
+  /** Locales y equipos devueltos al terminar un contrato. */
+  coleccionRecepcion: "recepcionLocales",
   coleccionFichas: "fichasConfig",
   plantillaFicha: "ficha-config-v1",
   coleccionFichasCliente: "fichasCliente",

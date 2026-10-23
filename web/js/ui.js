@@ -73,6 +73,15 @@ function cerrarExito() {
   location.hash = destinoExito;
 }
 
+/**
+ * Cierra los diálogos abiertos sin navegar. Se usa al cambiar de
+ * ruta (atrás del navegador) para que no queden sobre otra pantalla.
+ * @returns {void}
+ */
+export function cerrarModales() {
+  document.querySelectorAll("dialog[open]").forEach((d) => d.close());
+}
+
 let confirmarListo = false;
 /** @type {(() => void)|null} */
 let confirmarOk = null;

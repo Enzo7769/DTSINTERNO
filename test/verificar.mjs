@@ -28,6 +28,7 @@ import {
   GRUPOS_FICHA,
   avanceFicha,
   formatoMonto,
+  leerEntero,
   leerMonto
 } from "../web/js/hw-catalogo.js";
 import {
@@ -35,6 +36,17 @@ import {
   validarModelo
 } from "../web/js/modelo-validacion.js";
 import { fechaValida, formatearFecha } from "../web/js/fechas.js";
+import { ITEMS_RECEPCION } from "../web/js/recepcion-catalogo.js";
+import {
+  avance,
+  etapaLocal,
+  leerPlanillaLocales,
+  normalizarLocal,
+  novedades,
+  regionDesdeTexto,
+  resultadoEquipo,
+  validarLocal
+} from "../web/js/recepcion-datos.js";
 import {
   alertas as alertasCostos,
   composicion,
@@ -368,6 +380,34 @@ afirmar(
 afirmar(leerMonto("1.277,20", 2) === 1277.2, "lee 1.277,20");
 afirmar(leerMonto("1277.20", 2) === 1277.2, "lee 1277.20");
 afirmar(leerMonto("730.000", 0) === 730000, "lee 730.000 en CLP");
+afirmar(
+  leerMonto("0.125", 3) === 0.125 && leerMonto("0.500", 3) === 0.5
+    && leerMonto("1.500", 0) === 1500 && leerMonto("-100", 0) === 0,
+  "«0.125» es decimal, «1.500» es mil quinientos y no hay negativos"
+);
+afirmar(
+  leerEntero("2,5") === null && leerEntero("1.5") === null
+    && leerEntero("1.000") === 1000 && leerEntero("") === 0
+    && leerEntero("12") === 12,
+  "la cantidad de equipos solo acepta enteros"
+);
+const tornillos = normalizarCosto({
+  moneda: "USD", tipoCambio: { usd: 950, uf: 0 }, cantidadEquipos: "2,5",
+  lineas: Array.from({ length: 100 }, () => ({
+    concepto: "Tornillo", cantidad: 1, valor: 4, moneda: "CLP"
+  }))
+});
+const hhUf = normalizarCosto({
+  moneda: "UF", tipoCambio: { usd: 950, uf: 39000 },
+  lineas: [{ concepto: "HH", cantidad: "0,04", valor: "0,156",
+    moneda: "UF" }]
+});
+afirmar(
+  tornillos.costo === 0.42 && tornillos.cantidadEquipos === 1
+    && validarCosto(tornillos, "", [], "2,5").campos["k-equipos"] === true
+    && hhUf.lineas[0].valor === 0.156 && hhUf.lineas[0].subtotal === 0.0062,
+  "el costo suma líneas sin redondear cada una y la HH guarda 4 decimales"
+);
 afirmar(
   formatoMonto(3840.69, "USD") === "USD 3.840,69",
   "muestra USD con formato chileno"
@@ -1133,6 +1173,95 @@ afirmar(
       nombreClave: "Z", tipo: "totem" }])
       .some((a) => a.tipo === "sinCosto"),
   "el resumen calcula variación, composición y alertas"
+);
+
+const todoOkRec = Object.fromEntries(ITEMS_RECEPCION
+  .map((item) => [item.id, { estado: "ok" }]));
+const localRec = normalizarLocal({
+  contrato: "Walmart Líder",
+  codigo: "lid01",
+  region: "RM",
+  equipos: [
+    { tipo: "totem", etapa: "revisado", fechaRecepcion: "2026-10-20",
+      enciende: "si", checklist: { ...todoOkRec,
+        impresora: { estado: "falta", nota: "sin impresora" } } },
+    { tipo: "visor", etapa: "revisado", fechaRecepcion: "2026-10-20",
+      enciende: "si", checklist: todoOkRec },
+    { tipo: "totem", etapa: "transito" }
+  ]
+});
+afirmar(
+  localRec.codigo === "LID01"
+    && resultadoEquipo(localRec.equipos[0]) === "incompleto"
+    && resultadoEquipo(localRec.equipos[1]) === "ok"
+    && !("impresora" in localRec.equipos[1].checklist)
+    && resultadoEquipo(localRec.equipos[2]) === ""
+    && etapaLocal(localRec) === "transito"
+    && avance([localRec]).revisados === 2
+    && avance([localRec]).recibidos === 2
+    && novedades([localRec], ITEMS_RECEPCION)[0].falta === 1,
+  "la recepción calcula resultado, etapa, avance y faltantes"
+);
+const sinRevisar = normalizarLocal({
+  contrato: "X", codigo: "LID02", region: "RM",
+  equipos: [{ etapa: "revisado" }]
+});
+afirmar(
+  !validarLocal(sinRevisar, []).valido
+    && !validarLocal(localRec, [{ id: "otro", codigoClave: "LID01",
+      contrato: "Walmart Líder" }]).valido
+    && validarLocal(localRec, []).valido,
+  "un equipo revisado pide todo evaluado y el código no se repite"
+);
+const planilla = leerPlanillaLocales(
+  "Código;Local;Región;Comuna;Equipos\nLID01;Líder Maipú;13;Maipú;2\n"
+    + "LID02;Líder Viña;Valparaíso;Viña del Mar;1\nLID01;;;;\n",
+  "Walmart Líder"
+);
+afirmar(
+  planilla.locales.length === 2
+    && planilla.locales[0].region === "RM"
+    && planilla.locales[0].equipos.length === 3
+    && planilla.locales[1].region === "VA"
+    && regionDesdeTexto("Región del Biobío") === "BI"
+    && regionDesdeTexto("XII") === "MA",
+  "la planilla de locales se lee desde Excel con regiones flexibles"
+);
+const conComillas = leerPlanillaLocales(
+  "Código,Local,Región,Equipos\nLID05,\"Líder, Centro\",VI Región,0\n"
+    + "LID06,\"Dice \"\"Sur\"\"\",Libertador General Bernardo "
+    + "O'Higgins,2\n",
+  "Walmart Líder"
+);
+afirmar(
+  conComillas.locales[0].nombre === "Líder, Centro"
+    && conComillas.locales[0].region === "LI"
+    && conComillas.locales[0].equipos.length === 0
+    && conComillas.locales[1].nombre === "Dice \"Sur\""
+    && conComillas.locales[1].region === "LI"
+    && conComillas.locales[1].equipos.length === 2
+    && regionDesdeTexto("Aisén del General Carlos Ibáñez del Campo") === "AI"
+    && regionDesdeTexto("Magallanes y de la Antártica Chilena") === "MA"
+    && regionDesdeTexto("Región de Los Ríos") === "LR"
+    && regionDesdeTexto("xyz") === "",
+  "la planilla respeta comillas, equipos en 0 y nombres largos de región"
+);
+const futuro = normalizarLocal({
+  contrato: "X", codigo: "LID07", region: "RM",
+  equipos: [{ etapa: "recibido", fechaRecepcion: "2099-01-01" }]
+});
+const apagado = normalizarLocal({
+  contrato: "X", codigo: "LID08", region: "RM",
+  equipos: [{ tipo: "visor", etapa: "revisado", enciende: "no",
+    checklist: Object.fromEntries(ITEMS_RECEPCION
+      .map((item) => [item.id, { estado: "noprobado" }])) }]
+});
+afirmar(
+  !validarLocal(futuro, [], "", "2026-10-23").valido
+    && validarLocal(futuro, []).valido
+    && resultadoEquipo(apagado.equipos[0]) === "danado"
+    && novedades([apagado], ITEMS_RECEPCION)[0].id === "_enciende",
+  "recepción futura se rechaza y «no enciende» aparece en novedades"
 );
 
 if (fallos > 0) {

@@ -163,6 +163,38 @@ await caso("el cliente no reabre una ficha finalizada", () =>
   assertFails(updateDoc(doc(anonimo.firestore(),
     `fichasCliente/${TOKEN_FIN}`), { estado: "en_curso" })));
 
+const localRecepcion = (cambios) => ({
+  plantilla: "recepcion-local-v1",
+  contrato: "Walmart Líder",
+  codigo: "LID01",
+  codigoClave: "LID01",
+  nombre: "Líder Maipú",
+  region: "RM",
+  comuna: "Maipú",
+  direccion: "",
+  contacto: "",
+  retiroProgramado: "",
+  transportista: "",
+  guia: "",
+  notas: "",
+  equipos: [],
+  creadoEn: serverTimestamp(),
+  actualizadoEn: serverTimestamp(),
+  creadoPor: "admin",
+  creadoPorEmail: "admin@dts.cl",
+  actualizadoPor: "admin",
+  numero: 1,
+  ...cambios
+});
+await caso("el admin registra un local para recibir equipos", () =>
+  assertSucceeds(setDoc(doc(admin.firestore(), "recepcionLocales/l1"),
+    localRecepcion({}))));
+await caso("un local necesita una región válida", () =>
+  assertFails(setDoc(doc(admin.firestore(), "recepcionLocales/l2"),
+    localRecepcion({ region: "Marte" }))));
+await caso("un usuario sin rol admin no ve la recepción", () =>
+  assertFails(getDoc(doc(tecnico.firestore(), "recepcionLocales/l1"))));
+
 const subir = (ctx, token) => uploadString(
   ref(ctx.storage(), `fichasCliente/${token}/respuestas.pdf`),
   PDF,

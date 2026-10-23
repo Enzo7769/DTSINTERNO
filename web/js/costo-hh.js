@@ -24,7 +24,7 @@ import {
   conceptoHh,
   montoTareaUf
 } from "./hh-tareas.js";
-import { decimalesDe, leerMonto } from "./hw-catalogo.js";
+import { decimalesDe, leerEntero, leerMonto } from "./hw-catalogo.js";
 
 /**
  * Arma la pestaña HH. Si el costo ya tenía estas tareas, quedan
@@ -33,10 +33,13 @@ import { decimalesDe, leerMonto } from "./hw-catalogo.js";
  * @returns {HTMLElement}
  */
 export function pintarPanelHh(lineas) {
+  // Varias líneas pueden tener el mismo concepto: ninguna se pierde.
   const guardadas = new Map();
   (lineas || []).forEach((linea) => {
-    guardadas.set(normalizarBusqueda(linea.concepto), linea);
+    const clave = normalizarBusqueda(linea.concepto);
+    guardadas.set(clave, [...(guardadas.get(clave) || []), linea]);
   });
+  const hayGuardadas = guardadas.size > 0;
   const caja = document.createElement("section");
   caja.id = "panel-manoObra";
   caja.className = "costeo-panel";
@@ -49,14 +52,11 @@ export function pintarPanelHh(lineas) {
   const cuerpo = document.createElement("tbody");
   TAREAS_HH.forEach((tarea) => {
     const clave = normalizarBusqueda(conceptoHh(tarea));
-    cuerpo.append(filaTarea(
-      tarea,
-      guardadas.get(clave) || null,
-      guardadas.size > 0
-    ));
-    guardadas.delete(clave);
+    const iguales = guardadas.get(clave) || [];
+    cuerpo.append(filaTarea(tarea, iguales.shift() || null, hayGuardadas));
   });
-  guardadas.forEach((linea) => cuerpo.append(filaDirecta(linea)));
+  guardadas.forEach((iguales) => iguales
+    .forEach((linea) => cuerpo.append(filaDirecta(linea))));
   tabla.append(cabezaHh(), cuerpo, pieTabla());
   const envoltura = document.createElement("div");
   envoltura.className = "tabla-wrap";
@@ -397,9 +397,10 @@ function activada(tr) {
 function aplicarTarea(tr, entra, equipos) {
   const base = Number(tr.dataset.horas) || 0;
   const horas = entra ? base : 0;
-  const valorUf = leerMonto(valorUfDe(tr), 2);
+  const valorUf = leerMonto(valorUfDe(tr), 4);
   const uf = montoTareaUf(horas, valorUf, true);
-  escribirOcultos(tr, horas, numeroVisible(valorUf * RECARGO_HH, 2, true),
+  // 4 decimales: el valor guardado es el mismo con que calcula la tabla.
+  escribirOcultos(tr, horas, numeroVisible(valorUf * RECARGO_HH, 4),
     "UF");
   const horasLote = horas * equipos;
   poner(tr, "horas", numeroVisible(horas, 2, true));
@@ -516,6 +517,6 @@ function textoUf(valor) {
  */
 function equiposActuales() {
   const campo = document.getElementById("k-equipos");
-  const n = leerMonto(campo ? campo.value : "1", 0);
+  const n = leerEntero(campo ? campo.value : "1");
   return n > 0 ? n : 1;
 }

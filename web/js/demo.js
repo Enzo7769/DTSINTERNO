@@ -3,7 +3,8 @@
  * Autor: DTS Autoservicio SpA
  * Fecha: 2026-10-01
  * Dependencias: catalogo.js, validacion.js, cartilla-validacion.js,
- *   costo-validacion.js, datos-planilla.js, modelo-validacion.js
+ *   costo-validacion.js, datos-planilla.js, modelo-validacion.js,
+ *   recepcion-datos.js
  */
 
 import { SECCIONES } from "./catalogo.js";
@@ -11,6 +12,7 @@ import { normalizarCartilla } from "./cartilla-validacion.js";
 import { normalizarCosto } from "./costo-validacion.js";
 import { PLANILLA_COSTOS, PLANILLA_MODELOS } from "./datos-planilla.js";
 import { normalizarModelo } from "./modelo-validacion.js";
+import { normalizarLocal } from "./recepcion-datos.js";
 import { normalizarChecklist } from "./validacion.js";
 
 const RED_PRIVADA = [
@@ -237,4 +239,78 @@ function armar(base) {
     actualizadoEn: base.creadoEn,
     actualizadoPor: "demo"
   };
+}
+
+/**
+ * Recepción de equipos de ejemplo: locales Líder en varias regiones,
+ * con equipos en distintas etapas y algunas revisiones con novedades.
+ * @returns {object[]}
+ */
+export function semillaRecepcion() {
+  const todoOk = (tipo, extra) => {
+    const lista = ["gabinete", "cerradura", "base", "pantalla", "cpu",
+      "disco", "ram", "fuente", "lector", "parlantes", "cables",
+      "router", "ups"];
+    if (tipo === "totem") lista.push("touch", "impresora");
+    const checklist = {};
+    lista.forEach((id) => {
+      checklist[id] = { estado: id === "ups" || id === "router" ? "na" : "ok" };
+    });
+    return { ...checklist, ...(extra || {}) };
+  };
+  const revisado = (serie, fecha, extra, enciende) => ({
+    tipo: "totem", modelo: "T22-M41 Aconcagua", serie, etapa: "revisado",
+    fechaRecepcion: fecha, recibidoPor: "Bodega Santiago",
+    enciende: enciende || "si", checklist: todoOk("totem", extra)
+  });
+  const simple = (serie, etapa, fecha) => ({
+    tipo: "totem", modelo: "T22-M41 Aconcagua", serie, etapa,
+    fechaRecepcion: fecha || "", recibidoPor: fecha ? "Bodega Santiago" : ""
+  });
+  const datos = [
+    ["LID01", "Líder Maipú", "RM", "Maipú", "Av. Pajaritos 3030",
+      [revisado("DTS-L001", "2026-10-14"), revisado("DTS-L002", "2026-10-14",
+        { impresora: { estado: "falta", nota: "Llegó sin impresora" } })]],
+    ["LID02", "Líder La Florida", "RM", "La Florida",
+      "Av. Vicuña Mackenna 7110",
+      [revisado("DTS-L003", "2026-10-15",
+        { pantalla: { estado: "danado", nota: "Trizadura en esquina" } })]],
+    ["LID03", "Líder Puente Alto", "RM", "Puente Alto",
+      "Av. Concha y Toro 1149",
+      [simple("DTS-L004", "recibido", "2026-10-20"),
+        simple("DTS-L005", "recibido", "2026-10-20")]],
+    ["LID04", "Líder Quilicura", "RM", "Quilicura", "Av. Manuel A. Matta 580",
+      [simple("DTS-L006", "transito")]],
+    ["LID05", "Líder Viña del Mar", "VA", "Viña del Mar", "Av. 15 Norte 961",
+      [revisado("DTS-L007", "2026-10-16",
+        { cerradura: { estado: "falta", nota: "Sin llaves" } })]],
+    ["LID06", "Líder Valparaíso", "VA", "Valparaíso", "Av. Argentina 150",
+      [simple("DTS-L008", "transito"), simple("DTS-L009", "transito")]],
+    ["LID07", "Líder Rancagua", "LI", "Rancagua",
+      "Av. República de Chile 290",
+      [revisado("DTS-L010", "2026-10-17")]],
+    ["LID08", "Líder Talca", "ML", "Talca", "Av. San Miguel 2710",
+      [simple("DTS-L011", "pendiente")]],
+    ["LID09", "Líder Concepción", "BI", "Concepción", "Av. Los Carrera 301",
+      [simple("DTS-L012", "recibido", "2026-10-21")]],
+    ["LID10", "Líder Temuco", "AR", "Temuco", "Av. Alemania 0671",
+      [simple("DTS-L013", "pendiente"), simple("DTS-L014", "pendiente")]],
+    ["LID11", "Líder Puerto Montt", "LL", "Puerto Montt",
+      "Av. Presidente Ibáñez 600",
+      [simple("DTS-L015", "pendiente")]],
+    ["LID12", "Líder Antofagasta", "AN", "Antofagasta", "Av. Angamos 745",
+      [revisado("DTS-L016", "2026-10-18", {}, "no")]],
+    ["LID13", "Líder La Serena", "CO", "La Serena", "Av. Balmaceda 2885",
+      [simple("DTS-L017", "transito")]],
+    ["LID14", "Líder Punta Arenas", "MA", "Punta Arenas", "Av. Frei 01110",
+      [simple("DTS-L018", "pendiente")]]
+  ];
+  return datos.map(([codigo, nombre, region, comuna, direccion, equipos],
+    i) => conAuditoria(normalizarLocal({
+    contrato: "Walmart Líder",
+    codigo, nombre, region, comuna, direccion,
+    contacto: "Jefe de local",
+    retiroProgramado: "2026-10-28",
+    equipos
+  }), `local-recepcion-${i + 1}`, i + 1));
 }

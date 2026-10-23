@@ -219,8 +219,9 @@ export const MODULOS = [
   {
     id: "recepcion",
     etiqueta: "Recepción de equipos",
-    rutas: [],
-    habilitado: false
+    rutas: ["/recepcion", "/recepcion-local"],
+    destino: "#/recepcion",
+    habilitado: true
   },
   {
     id: "usuarios",

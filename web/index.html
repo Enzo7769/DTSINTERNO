@@ -600,6 +600,272 @@
         </div>
       </section>
 
+      <section id="vista-recepcion" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p class="kicker">Devoluciones de contratos</p>
+            <h1>Recepción de equipos</h1>
+            <p class="ayuda">
+              Locales y equipos que vuelven a bodega: retiro, llegada y
+              revisión de cada componente.
+            </p>
+          </div>
+          <div class="grupo-botones">
+            <button
+              id="btn-rc-importar"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Importar desde Excel
+            </button>
+            <button
+              id="btn-rc-csv"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Exportar CSV
+            </button>
+            <button id="btn-rc-nuevo" class="boton" type="button">
+              Nuevo local
+            </button>
+          </div>
+        </header>
+        <div class="tarjeta rc-barra">
+          <label class="campo">
+            <span>Contrato</span>
+            <select id="rc-contrato" data-sin-cambios></select>
+          </label>
+          <label class="campo rc-rapido">
+            <span>Recibir rápido: N° de serie o código de local</span>
+            <input
+              id="rc-rapido"
+              type="search"
+              maxlength="60"
+              autocomplete="off"
+              placeholder="Ej.: DTS-L004 o LID03"
+              data-sin-cambios
+            >
+          </label>
+          <button id="btn-rc-rapido" class="boton" type="button">
+            Buscar
+          </button>
+        </div>
+        <p id="rc-estado" class="estado-lista" hidden></p>
+        <div id="rc-contenido">
+          <p id="rc-alcance" class="ayuda rc-alcance" aria-live="polite"></p>
+          <div id="rc-kpis" class="kpis rc-kpis"></div>
+          <div class="cr-grid">
+            <section class="tarjeta cr-panel">
+              <h2>Avance por región</h2>
+              <p class="ayuda">Equipos por etapa, de norte a sur.</p>
+              <ul id="rc-leyenda" class="rc-leyenda"></ul>
+              <div id="rc-regiones" class="rc-regiones"></div>
+            </section>
+            <section class="tarjeta cr-panel">
+              <h2>Novedades para reclamar</h2>
+              <p class="ayuda">
+                Componentes que llegaron faltando o dañados en equipos
+                ya revisados.
+              </p>
+              <div id="rc-novedades"></div>
+            </section>
+          </div>
+          <form id="form-filtros-rc" class="filtros">
+            <label class="campo">
+              <span>Región</span>
+              <select id="rcf-region" data-sin-cambios>
+                <option value="">Todas</option>
+              </select>
+            </label>
+            <label class="campo">
+              <span>Etapa</span>
+              <select id="rcf-etapa" data-sin-cambios>
+                <option value="">Todas</option>
+              </select>
+            </label>
+            <label class="campo">
+              <span>Resultado</span>
+              <select id="rcf-resultado" data-sin-cambios>
+                <option value="">Todos</option>
+                <option value="ok">Completo y OK</option>
+                <option value="danado">Con daños</option>
+                <option value="incompleto">Incompleto</option>
+              </select>
+            </label>
+            <label class="campo">
+              <span>Buscar local, comuna o serie</span>
+              <input id="rcf-texto" type="search" maxlength="80"
+                data-sin-cambios>
+            </label>
+            <button
+              id="btn-rcf-limpiar"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Limpiar filtros
+            </button>
+          </form>
+          <p id="rc-conteo" class="conteo"></p>
+          <div class="tabla-wrap tarjeta">
+            <table class="rc-tabla-locales">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Local</th>
+                  <th>Comuna</th>
+                  <th>Región</th>
+                  <th class="derecha">Equipos</th>
+                  <th>Etapa</th>
+                  <th>Revisión</th>
+                  <th>Retiro</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="rc-cuerpo"></tbody>
+            </table>
+          </div>
+        </div>
+        <dialog id="rc-importar" class="rc-dialogo">
+          <h2>Importar locales desde Excel</h2>
+          <p class="ayuda">
+            Copia las filas en Excel (con la fila de encabezados) y
+            pégalas aquí. Columnas reconocidas: <strong>Código</strong>,
+            Nombre, Región, Comuna, Dirección, Equipos (cantidad),
+            Modelo, Serie, Tipo. Si un código se repite, cada fila es
+            otro equipo del mismo local.
+          </p>
+          <label class="campo">
+            <span>Contrato</span>
+            <input id="rc-imp-contrato" maxlength="80"
+              list="rc-contratos-lista" autocomplete="off">
+          </label>
+          <datalist id="rc-contratos-lista"></datalist>
+          <label class="campo">
+            <span>Filas pegadas</span>
+            <textarea id="rc-imp-texto" rows="8"
+              placeholder="Código&#9;Nombre&#9;Región&#9;Comuna&#9;Equipos"
+            ></textarea>
+          </label>
+          <div id="rc-imp-vista" class="rc-imp-vista"></div>
+          <div class="grupo-botones">
+            <button id="btn-rc-imp-revisar" class="boton boton-secundario"
+              type="button">Revisar</button>
+            <button id="btn-rc-imp-ok" class="boton" type="button"
+              disabled>Importar</button>
+            <button id="btn-rc-imp-cancelar" class="boton boton-secundario"
+              type="button">Cancelar</button>
+          </div>
+        </dialog>
+      </section>
+
+      <section id="vista-recepcion-local" class="vista" hidden>
+        <header class="encabezado">
+          <div>
+            <p id="rl-kicker" class="kicker">Recepción de equipos</p>
+            <h1 id="rl-titulo">Nuevo local</h1>
+            <p id="rl-meta" class="ayuda"></p>
+          </div>
+          <div class="grupo-botones">
+            <button
+              id="btn-rl-imprimir"
+              class="boton boton-secundario"
+              type="button"
+            >
+              Imprimir acta
+            </button>
+            <a class="boton boton-secundario" href="#/recepcion">
+              Volver a recepción
+            </a>
+          </div>
+        </header>
+        <div
+          id="rl-mensaje"
+          class="mensaje mensaje-bloque"
+          hidden
+          role="alert"
+        ></div>
+        <section class="tarjeta">
+          <h2>Local</h2>
+          <div class="rejilla rejilla-2 rl-datos">
+            <label class="campo" data-campo="r-contrato">
+              <span>Contrato o cliente *</span>
+              <input id="r-contrato" maxlength="80"
+                list="rc-contratos-lista" autocomplete="off"
+                placeholder="Ej.: Walmart Líder">
+            </label>
+            <label class="campo" data-campo="r-codigo">
+              <span>Código del local *</span>
+              <input id="r-codigo" maxlength="20" autocomplete="off"
+                placeholder="Ej.: LID01">
+            </label>
+            <label class="campo">
+              <span>Nombre del local</span>
+              <input id="r-nombre" maxlength="120" autocomplete="off"
+                placeholder="Ej.: Líder Maipú">
+            </label>
+            <label class="campo" data-campo="r-region">
+              <span>Región *</span>
+              <select id="r-region">
+                <option value="">Selecciona…</option>
+              </select>
+            </label>
+            <label class="campo">
+              <span>Comuna</span>
+              <input id="r-comuna" maxlength="60" autocomplete="off"
+                list="rl-comunas">
+              <datalist id="rl-comunas"></datalist>
+            </label>
+            <label class="campo">
+              <span>Dirección</span>
+              <input id="r-direccion" maxlength="160" autocomplete="off">
+            </label>
+            <label class="campo">
+              <span>Contacto en el local</span>
+              <input id="r-contacto" maxlength="120" autocomplete="off"
+                placeholder="Nombre y teléfono">
+            </label>
+            <label class="campo">
+              <span>Retiro programado</span>
+              <input id="r-retiro" type="date">
+            </label>
+            <label class="campo">
+              <span>Transportista</span>
+              <input id="r-transportista" maxlength="80" autocomplete="off">
+            </label>
+            <label class="campo">
+              <span>Guía de despacho</span>
+              <input id="r-guia" maxlength="40" autocomplete="off">
+            </label>
+          </div>
+          <label class="campo">
+            <span>Notas</span>
+            <textarea id="r-notas" maxlength="600" rows="2"></textarea>
+          </label>
+        </section>
+        <section class="tarjeta">
+          <div class="cabeza-seccion">
+            <h2>Equipos del local</h2>
+            <span id="rl-resumen" class="ayuda"></span>
+          </div>
+          <div id="rl-equipos" class="rl-equipos"></div>
+          <button id="btn-rl-agregar" class="boton ficha-agregar"
+            type="button">+ Agregar equipo</button>
+        </section>
+        <div class="rl-firmas" aria-hidden="true">
+          <div><span></span>Entrega (transportista / local)</div>
+          <div><span></span>Recibe (bodega DTS)</div>
+        </div>
+        <div class="barra-acciones">
+          <button id="btn-rl-guardar" class="boton" type="button">
+            Guardar
+          </button>
+          <button id="btn-rl-eliminar" class="boton boton-peligro"
+            type="button" hidden>
+            Eliminar local
+          </button>
+        </div>
+      </section>
+
       <section id="vista-costos-resumen" class="vista" hidden>
         <header class="encabezado">
           <div>

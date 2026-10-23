@@ -4049,3 +4049,477 @@ tr.fila-anterior td.fuerte { font-weight: 600; }
   }
   body.imprimir-resumen table.cr-tabla th { font-size: 9px; }
 }
+
+/* ==========================================================
+   Recepción de equipos
+   ========================================================== */
+
+.rc-barra {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(240px, 2fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.rc-rapido input { font-size: 16px; }
+
+.rc-kpis .avance-barra { margin: 4px 0 2px; height: 6px; }
+
+.rc-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--tinta-suave);
+}
+
+.rc-leyenda li { display: flex; align-items: center; gap: 6px; }
+
+.rc-leyenda i { width: 12px; height: 12px; border-radius: 3px; }
+
+.rc-regiones { display: grid; gap: 4px; }
+
+.rc-region {
+  display: grid;
+  grid-template-columns: minmax(110px, 30%) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  padding: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tinta);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rc-region:hover,
+.rc-region:focus-visible { background: #f2f7fa; }
+
+.rc-region-nombre { font-size: 14px; font-weight: 600; }
+
+.rc-region-pista {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  min-width: 8px;
+}
+
+.rc-region-pista span { min-width: 4px; }
+
+.rc-region-pista span:first-child { border-radius: 4px 0 0 4px; }
+
+.rc-region-pista span:last-child { border-radius: 0 4px 4px 0; }
+
+.rc-region-pista span:only-child { border-radius: 4px; }
+
+.rc-region-dato {
+  font-size: 12px;
+  color: var(--tinta-suave);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rc-tabla-novedades { width: 100%; font-size: 14px; }
+
+.rc-tabla-novedades th,
+.rc-tabla-novedades td { padding: 7px 8px; }
+
+.rc-ok::before { content: "✓ "; color: var(--ok); font-weight: 700; }
+
+/* Etapas y resultados: texto + ícono, no solo color. */
+.rc-etapa { white-space: nowrap; }
+
+.rc-etapa-pendiente { background: #eef1f4; color: #4d6472; }
+
+.rc-etapa-transito { background: #e3effc; color: #1c5cab; }
+
+.rc-etapa-recibido { background: #d6e6fa; color: #104281; }
+
+.rc-etapa-revisado { background: #184f95; color: #ffffff; }
+
+.rc-revision { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+
+.rc-res {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rc-res-ok { background: var(--ok-fondo); color: var(--ok); }
+
+.rc-res-danado { background: var(--aviso-fondo); color: var(--aviso); }
+
+.rc-res-incompleto { background: var(--mal-fondo); color: var(--mal); }
+
+.rc-res-sin { background: var(--papel); color: var(--tinta-suave); }
+
+/* Importar desde Excel. */
+.rc-dialogo {
+  width: min(680px, calc(100vw - 32px));
+  border: 0;
+  border-radius: var(--radio);
+  padding: 20px;
+  box-shadow: var(--sombra);
+}
+
+.rc-dialogo::backdrop { background: rgba(8, 52, 76, 0.45); }
+
+.rc-dialogo h2 { margin-bottom: 6px; }
+
+.rc-dialogo .campo { margin-top: 10px; }
+
+.rc-dialogo textarea { font-family: ui-monospace, Consolas, monospace; }
+
+.rc-imp-vista { margin: 10px 0; font-size: 14px; }
+
+.rc-imp-vista p { white-space: pre-line; }
+
+/* Ficha del local: cada equipo plegable. */
+.rl-equipos { display: grid; gap: 10px; margin: 10px 0 12px; }
+
+.rl-equipo {
+  border: 1px solid var(--linea);
+  border-radius: 14px;
+  background: var(--blanco);
+}
+
+.rl-equipo.invalido { border-color: var(--mal); }
+
+.rl-equipo > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.rl-equipo > summary::-webkit-details-marker { display: none; }
+
+.rl-equipo > summary::after {
+  content: "▾";
+  margin-left: auto;
+  color: var(--tinta-suave);
+}
+
+.rl-equipo[open] > summary {
+  border-bottom: 1px solid var(--linea);
+  background: #f8fbfc;
+  border-radius: 14px 14px 0 0;
+}
+
+.rl-equipo[open] > summary::after { content: "▴"; }
+
+.rl-cuerpo { display: grid; gap: 14px; padding: 14px; }
+
+.rl-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.rl-pasos {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.rl-paso {
+  min-height: 44px;
+  padding: 8px 6px;
+  border: 1px solid var(--linea);
+  border-radius: 10px;
+  background: var(--blanco);
+  color: var(--tinta-suave);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rl-paso.hecho { background: #e3effc; color: #1c5cab; border-color: #cfe0f5; }
+
+.rl-paso.actual { background: #184f95; color: #ffffff; border-color: #184f95; }
+
+.rl-paso:focus-visible { outline: 2px solid var(--azul); outline-offset: 2px; }
+
+.rl-revision { display: grid; gap: 10px; }
+
+.rl-revision-cabeza {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.rl-revision-cabeza h3 { margin: 0; font-size: 16px; }
+
+.rl-faltan { color: var(--aviso); font-weight: 700; font-size: 13px; }
+
+.rl-faltan::before { content: "⚠ "; }
+
+.rl-listo { color: var(--ok); font-weight: 700; font-size: 13px; }
+
+.rl-todo-ok { margin-left: auto; padding: 6px 10px; font-size: 13px; }
+
+.rl-grupo {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rl-grupo legend {
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--azul);
+}
+
+.rl-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--linea);
+  border-radius: 10px;
+}
+
+.rl-item strong { display: block; font-size: 14px; }
+
+.rl-item small { color: var(--tinta-suave); font-size: 12px; }
+
+.rl-item.es-danado { background: #fffaf0; border-color: #f3ddb0; }
+
+.rl-item.es-falta { background: #fff6f6; border-color: #f0c8c8; }
+
+.rl-item.es-ok { background: #f6fbf8; }
+
+.rl-nota {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--linea);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.rl-enciende { background: #f7fbfd; }
+
+.rl-opciones { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.rl-op { position: relative; }
+
+.rl-op input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  cursor: pointer;
+}
+
+.rl-op span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 64px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid var(--linea);
+  border-radius: 10px;
+  background: var(--blanco);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tinta-suave);
+}
+
+.rl-op input:focus-visible + span { outline: 2px solid var(--azul); }
+
+.rl-op-ok input:checked + span,
+.rl-op-si input:checked + span {
+  background: var(--ok); border-color: var(--ok); color: #ffffff;
+}
+
+.rl-op-danado input:checked + span {
+  background: #b26b00; border-color: #b26b00; color: #ffffff;
+}
+
+.rl-op-falta input:checked + span,
+.rl-op-no input:checked + span {
+  background: var(--mal); border-color: var(--mal); color: #ffffff;
+}
+
+.rl-op-na input:checked + span {
+  background: #5f6b74; border-color: #5f6b74; color: #ffffff;
+}
+
+.rl-op-noprobado input:checked + span {
+  background: #4d6472; border-color: #4d6472; color: #ffffff;
+}
+
+.rl-item.es-noprobado { background: #f4f6f8; }
+
+.rc-alcance:empty { display: none; }
+
+.rc-alcance { margin: 0 0 8px; font-weight: 700; color: var(--azul); }
+
+.rc-region.elegida { background: #e3effc; box-shadow: inset 3px 0 0 #184f95; }
+
+.rc-fila { cursor: pointer; }
+
+.rc-fila:hover td { background: #f7fbfd; }
+
+.rc-tabla-locales .acciones .boton { min-height: 40px; }
+
+/* Controles de la recepción cómodos con el dedo (≥ 40 px). */
+#vista-recepcion-local input,
+#vista-recepcion-local select,
+#vista-recepcion .filtros select,
+#vista-recepcion .filtros input,
+.rl-todo-ok,
+.rl-pie .boton,
+#btn-rl-agregar { min-height: 40px; }
+
+.rl-pie { display: flex; justify-content: flex-end; }
+
+@media (max-width: 720px) {
+  .rc-barra, .rl-grid { grid-template-columns: 1fr; }
+  .rl-pasos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rl-item { grid-template-columns: 1fr; }
+  .rl-opciones { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .rl-op span { min-width: 0; width: 100%; }
+  .rc-region { grid-template-columns: 1fr auto; }
+  .rc-region-pista { grid-column: 1 / -1; grid-row: 2; }
+  .rc-kpis { grid-template-columns: 1fr 1fr; }
+  .rl-todo-ok { margin-left: 0; width: 100%; }
+  /* La tabla de locales pasa a tarjetas: una por local. */
+  .rc-tabla-locales thead { display: none; }
+  .rc-tabla-locales,
+  .rc-tabla-locales tbody,
+  .rc-tabla-locales tr { display: block; }
+  .rc-tabla-locales tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--linea);
+  }
+  .rc-tabla-locales td {
+    display: block;
+    padding: 0;
+    border: 0;
+    text-align: left;
+  }
+  .rc-tabla-locales td[data-label]:not([data-label=""])::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--tinta-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .rc-tabla-locales td.acciones { grid-column: 1 / -1; }
+  .rc-tabla-locales td.acciones .boton { width: 100%; }
+  .rc-tabla-locales td[colspan] { grid-column: 1 / -1; }
+}
+
+/* Acta de recepción impresa. */
+.rl-firmas { display: none; }
+
+@media print {
+  body.imprimir-acta { background: #ffffff; }
+  body.imprimir-acta .sidebar,
+  body.imprimir-acta #aviso-demo,
+  body.imprimir-acta .encabezado .grupo-botones,
+  body.imprimir-acta .barra-acciones,
+  body.imprimir-acta #btn-rl-agregar,
+  body.imprimir-acta .rl-pie,
+  body.imprimir-acta .rl-todo-ok,
+  body.imprimir-acta .rl-pasos .rl-paso:not(.actual) {
+    display: none !important;
+  }
+  body.imprimir-acta .app { display: block; }
+  body.imprimir-acta .contenido { padding: 0; }
+  body.imprimir-acta .rl-grid,
+  body.imprimir-acta .rl-datos {
+    grid-template-columns: repeat(3, 1fr) !important;
+  }
+  body.imprimir-acta .rl-item {
+    grid-template-columns: 1fr auto !important;
+    padding: 2px 6px;
+    break-inside: avoid;
+  }
+  body.imprimir-acta .rl-op input:not(:checked) + span { display: none; }
+  body.imprimir-acta .rl-item small { display: none; }
+  body.imprimir-acta .rl-equipo { break-inside: auto; }
+  body.imprimir-acta .tarjeta { padding: 10px 12px; margin-bottom: 8px; }
+  body.imprimir-acta .campo { gap: 2px; font-size: 11px; }
+  body.imprimir-acta .campo input,
+  body.imprimir-acta .campo select,
+  body.imprimir-acta .campo textarea {
+    padding: 2px 0;
+    border: 0;
+    border-bottom: 1px solid #c9d6dd;
+    border-radius: 0;
+    background: transparent;
+    appearance: none;
+    font-size: 12px;
+    min-height: 0;
+  }
+  body.imprimir-acta .rl-cuerpo { gap: 6px; padding: 8px 10px; }
+  body.imprimir-acta .rl-grupo {
+    grid-template-columns: 1fr 1fr;
+    gap: 3px 8px;
+  }
+  body.imprimir-acta .rl-grupo legend { margin-bottom: 0; font-size: 10px; }
+  body.imprimir-acta .rl-item strong { font-size: 11px; }
+  body.imprimir-acta .rl-op span {
+    min-width: 0;
+    min-height: 0;
+    padding: 1px 6px;
+    font-size: 10px;
+  }
+  body.imprimir-acta .rl-nota {
+    grid-column: 1 / -1;
+    min-height: 0;
+    padding: 1px 0;
+    font-size: 11px;
+    border: 0;
+  }
+  body.imprimir-acta .rl-pasos { display: block; }
+  body.imprimir-acta .rl-paso {
+    min-height: 0;
+    padding: 2px 8px;
+    font-size: 11px;
+  }
+  body.imprimir-acta .rl-revision-cabeza h3 { font-size: 13px; }
+  body.imprimir-acta h1 { font-size: 22px; }
+  body.imprimir-acta .rl-firmas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 48px;
+    font-size: 12px;
+    text-align: center;
+  }
+  body.imprimir-acta .rl-firmas span {
+    display: block;
+    height: 40px;
+    border-bottom: 1px solid #000000;
+    margin-bottom: 6px;
+  }
+  body.imprimir-acta * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

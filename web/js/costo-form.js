@@ -96,6 +96,8 @@ let modelos = [];
 let fechaCambio = "";
 /** Dólar y UF salieron de config porque no hubo cotización. */
 let cambioReferencia = false;
+/** La UF no vino con la cotización del día: se usa otra y se avisa. */
+let ufSinCotizacion = false;
 
 /**
  * @param {() => void} alGuardar
@@ -130,6 +132,7 @@ export function iniciarCosto(alGuardar) {
     porId(id).addEventListener("input", () => {
       fechaCambio = "";
       cambioReferencia = false;
+      ufSinCotizacion = false;
       pintarAyudaCambio();
     });
   });
@@ -413,6 +416,7 @@ async function usarCotizacion(iso) {
   if (dato.uf) {
     porId("k-cambio-uf").value = numeroVisible(dato.uf, 2, true);
   }
+  ufSinCotizacion = !dato.uf;
   fechaCambio = dato.fecha;
   cambioReferencia = false;
   pintarAyudaCambio();
@@ -433,6 +437,7 @@ function escribirParametros(datos, dia) {
   if (cambio.usd) fechaCambio = datos.fechaCambio || "";
   else fechaCambio = dia && dia.usd ? dia.fecha : "";
   cambioReferencia = !cambio.usd && !(dia && dia.usd);
+  ufSinCotizacion = !cambio.uf && !(dia && dia.uf) && !cambioReferencia;
   if (fechaCambio) porId("k-cambio-fecha").value = fechaCambio;
   porId("k-equipos").value = String(datos.cantidadEquipos || 1);
   porId("k-cambio-usd").value = numeroVisible(usd, 2, true);
@@ -448,6 +453,7 @@ function pintarAyudaCambio() {
   let texto = CT.cambioManual;
   if (fechaCambio) texto = textoCambioDia(formatearFecha(fechaCambio));
   else if (cambioReferencia) texto = CT.cambioReferencia;
+  if (ufSinCotizacion) texto = `${texto} ${CT.ufSinCotizacion}`;
   porId("k-cambio-ayuda").textContent = texto;
 }
 
@@ -529,7 +535,8 @@ async function guardar(conPdf) {
   const revision = validarCosto(
     limpio,
     crudo.fechaActualizacion,
-    crudo.lineas
+    crudo.lineas,
+    crudo.cantidadEquipos
   );
   pintarErrores(revision);
   if (!revision.valido) return false;
