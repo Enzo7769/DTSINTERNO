@@ -10,6 +10,13 @@
  *   firebase, formulario, listado, logger, repositorio, sanitizar, ui
  */
 
+import { sembrarRecepcion } from "./recepcion-repositorio.js";
+import {
+  definirAutorRecepcion,
+  iniciarRecepcion,
+  mostrarLocalRecepcion,
+  mostrarRecepcion
+} from "./recepcion-vista.js";
 import { permitirCambioRuta } from "./cambios-pendientes.js";
 import {
   invalidarResumenCostos,
@@ -94,7 +101,8 @@ import {
   semilla,
   semillaCartillas,
   semillaCostos,
-  semillaModelos
+  semillaModelos,
+  semillaRecepcion
 } from "./demo.js";
 import { mensajeError } from "./errores.js";
 import {
@@ -181,6 +189,7 @@ async function entrarDemo() {
   sembrarCostos(semillaCostos());
   sembrarModelos(semillaModelos());
   sembrarEnvios(semillaEnvios());
+  sembrarRecepcion(semillaRecepcion());
   autor = {
     uid: "demo",
     email: "preview@dts.local",
@@ -257,6 +266,7 @@ function asegurarUi() {
   definirAutorFicha(autor);
   definirAutorEnvios(autor);
   definirAutorDetalleEnvio(autor);
+  definirAutorRecepcion(autor);
   if (uiLista) return;
   uiLista = true;
   iniciarFormulario(() => invalidarListado());
@@ -276,6 +286,7 @@ function asegurarUi() {
   iniciarEspec(() => invalidarEspecs());
   iniciarListadoEspecs();
   iniciarListadoEnvios();
+  iniciarRecepcion();
   iniciarDetalleEnvio();
   enlazarSalir(porId("btn-salir"));
   iniciarMenu();
@@ -331,6 +342,18 @@ async function enrutar() {
     const id = ruta.params.get("id") || "";
     if (id) await mostrarCartillaEdicion(id);
     else await mostrarCartillaNueva();
+    return;
+  }
+  if (ruta.path === "/recepcion") {
+    await mostrarRecepcion();
+    return;
+  }
+  if (ruta.path === "/recepcion-local") {
+    const equipo = ruta.params.get("equipo");
+    await mostrarLocalRecepcion(
+      ruta.params.get("id") || "",
+      equipo === null ? undefined : Number(equipo)
+    );
     return;
   }
   if (ruta.path === "/costos-resumen") {

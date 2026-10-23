@@ -35,6 +35,17 @@ import {
   validarModelo
 } from "../web/js/modelo-validacion.js";
 import { fechaValida, formatearFecha } from "../web/js/fechas.js";
+import { ITEMS_RECEPCION } from "../web/js/recepcion-catalogo.js";
+import {
+  avance,
+  etapaLocal,
+  leerPlanillaLocales,
+  normalizarLocal,
+  novedades,
+  regionDesdeTexto,
+  resultadoEquipo,
+  validarLocal
+} from "../web/js/recepcion-datos.js";
 import {
   alertas as alertasCostos,
   composicion,
@@ -1133,6 +1144,59 @@ afirmar(
       nombreClave: "Z", tipo: "totem" }])
       .some((a) => a.tipo === "sinCosto"),
   "el resumen calcula variación, composición y alertas"
+);
+
+const todoOkRec = Object.fromEntries(ITEMS_RECEPCION
+  .map((item) => [item.id, { estado: "ok" }]));
+const localRec = normalizarLocal({
+  contrato: "Walmart Líder",
+  codigo: "lid01",
+  region: "RM",
+  equipos: [
+    { tipo: "totem", etapa: "revisado", fechaRecepcion: "2026-10-20",
+      enciende: "si", checklist: { ...todoOkRec,
+        impresora: { estado: "falta", nota: "sin impresora" } } },
+    { tipo: "visor", etapa: "revisado", fechaRecepcion: "2026-10-20",
+      enciende: "si", checklist: todoOkRec },
+    { tipo: "totem", etapa: "transito" }
+  ]
+});
+afirmar(
+  localRec.codigo === "LID01"
+    && resultadoEquipo(localRec.equipos[0]) === "incompleto"
+    && resultadoEquipo(localRec.equipos[1]) === "ok"
+    && !("impresora" in localRec.equipos[1].checklist)
+    && resultadoEquipo(localRec.equipos[2]) === ""
+    && etapaLocal(localRec) === "transito"
+    && avance([localRec]).revisados === 2
+    && avance([localRec]).recibidos === 2
+    && novedades([localRec], ITEMS_RECEPCION)[0].falta === 1,
+  "la recepción calcula resultado, etapa, avance y faltantes"
+);
+const sinRevisar = normalizarLocal({
+  contrato: "X", codigo: "LID02", region: "RM",
+  equipos: [{ etapa: "revisado" }]
+});
+afirmar(
+  !validarLocal(sinRevisar, []).valido
+    && !validarLocal(localRec, [{ id: "otro", codigoClave: "LID01",
+      contrato: "Walmart Líder" }]).valido
+    && validarLocal(localRec, []).valido,
+  "un equipo revisado pide todo evaluado y el código no se repite"
+);
+const planilla = leerPlanillaLocales(
+  "Código;Local;Región;Comuna;Equipos\nLID01;Líder Maipú;13;Maipú;2\n"
+    + "LID02;Líder Viña;Valparaíso;Viña del Mar;1\nLID01;;;;\n",
+  "Walmart Líder"
+);
+afirmar(
+  planilla.locales.length === 2
+    && planilla.locales[0].region === "RM"
+    && planilla.locales[0].equipos.length === 3
+    && planilla.locales[1].region === "VA"
+    && regionDesdeTexto("Región del Biobío") === "BI"
+    && regionDesdeTexto("XII") === "MA",
+  "la planilla de locales se lee desde Excel con regiones flexibles"
 );
 
 if (fallos > 0) {
